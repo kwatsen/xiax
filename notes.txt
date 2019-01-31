@@ -1,0 +1,54 @@
+
+# cat ~/.pypirc
+
+# . env.sh 
+#  py.test
+
+# python setup.py sdist
+# python setup.py test
+# python setup.py install
+  - created /Users/Kent/.venv/python3/bin/xiax
+  - running works!
+      (python3) $ xiax -s sdg 
+
+SHOULD'VE USED THE -e PARAM SO AS TO CREATE AN "EDIT" VERSION (with symlinks, etc.)
+(from https://docs.pytest.org/en/latest/goodpractices.html)
+# pip install -e .
+
+
+
+From: http://www.discoversdk.com/blog/how-to-create-a-new-python-module
+Publish to PyPi
+  - python setup.py register -r pypitest         # THIS FAILED: reg deprecated, use twine instead...
+  - python setup.py sdist upload -r pypitest
+  - python setup.py register -r pypi             # THIS FAILED: reg deprecated, use twine instead...
+  - python setup.py sdist upload -r pypi
+
+
+Or this?  works with the ~/.pypirc file?  
+WHAT ABOUT THE UploadCommand in setup.py?????????
+From https://blog.jetbrains.com/pycharm/2017/05/how-to-publish-your-package-on-pypi/
+# twine upload --repository-url https://test.pypi.org/legacy/ dist/*
+  - twine register dist/*
+  - twine upload dist/*
+
+# twine register dist/xiax-0.0.1.tar.gz -r xiax
+    InvalidConfiguration: Missing 'xiax' section from the configuration file
+    or not a complete URL in --repository-url.
+    Maybe you have a out-dated '~/.pypirc' format?
+    more info: https://docs.python.org/distutils/packageindex.html#pypirc
+
+# twine upload dist/* -r xiax
+
+
+TOX   (still NOT WORKING)
+- https://docs.pytest.org/en/latest/goodpractices.html
+- https://blog.ionelmc.ro/2014/05/25/python-packaging
+    ^-- claims that `python setup.py test` is a FAILED EXPERIEMENT
+
+BOTH OF THESE WORKED
+# tox -e py37
+# tox -e py37 bootstrap
+
+THIS DOES NOT WORK (because it tries to load py27 - DON'T KNOW WHY!)
+tox -e bootstrap

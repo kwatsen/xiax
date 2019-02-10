@@ -19,7 +19,7 @@ optional arguments:
   -d, --debug    print verbose output to stdout.
   -f, --force    allow existing files to be overwritten.
 
-Exit status code: 0 on success, non-0 on error. Error output goes to stderr.
+Exit status code: 0 on success, non-0 on error.  Error output goes to stderr.
 ```
 
 ## Auto-sensing Mode:

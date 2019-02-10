@@ -1,0 +1,8 @@
+
+.eggs/
+.python-version
+.tox/
+dist/
+src/*.egg-info/
+__pycache__/
+

@@ -1,44 +1,167 @@
 
+= Fresh Install
+
+== Install Xcode/git, brew
+
+  # xcode-select --install
+  # git status
+  # /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
+
+
+
+== Install Multiple Versions of Python
+
+   ref: http://blog.pinaxproject.com/2015/12/08/how-test-against-multiple-python-versions-parallel/
+
+   # brew install pyenv pyenv-virtualenv pyenv-virtualenvwrapper zlib
+      ^-- Based on output, I now have:
+
+        $ cat ~/.bash_profile
+        # from `brew install pyenv pyenv-virtualenv pyenv-virtualenvwrapper`
+
+        ## for openssl
+        export PATH="/usr/local/opt/openssl/bin:$PATH"
+        export LDFLAGS="-L/usr/local/opt/openssl/lib"
+        export CPPFLAGS="-I/usr/local/opt/openssl/include"
+        export PKG_CONFIG_PATH="/usr/local/opt/openssl/lib/pkgconfig"
+
+        ## for readline
+        export LDFLAGS="-L/usr/local/opt/readline/lib"
+        export CPPFLAGS="-I/usr/local/opt/openssl/include"
+        export PKG_CONFIG_PATH="/usr/local/opt/readline/lib/pkgconfig"
+
+        ## for pyenv-virtualenv-init
+        if which pyenv-virtualenv-init > /dev/null; then eval "$(pyenv virtualenv-init -)"; fi
+
+        ## for zlib
+        export LDFLAGS="-L/usr/local/opt/zlib/lib"
+        export CPPFLAGS="-I/usr/local/opt/zlib/include"
+        export PKG_CONFIG_PATH="/usr/local/opt/zlib/lib/pkgconfig"
+
+        ## for pyenv (ref: https://github.com/pyenv/pyenv)
+        if command -v pyenv 1>/dev/null 2>&1; then
+          eval "$(pyenv init -)"
+        fi
+
+    # pyenv install --list
+    # pyenv versions
+    # pyenv version
+
+    for each version of interest:
+      # pyenv install <version>
+
+    # pyenv install 3.7.2
+    # pyenv install 3.6.8
+    # pyenv install 3.5.6
+    # pyenv install 3.4.9
+    # pyenv install 2.7.10
+   
+    # pyenv versions
+    # pyenv version
+    # pyenv global 3.7.2
+       ^-- this creates the ~/.pyenv/version file
+    # pyenv version:
+      3.7.2 (set by /Users/kent/.pyenv/version)
+
+    In the ~/xiax/ directory:
+      # pyenv local 3.7.2 3.6.8 3.5.6 3.4.9 2.7.10
+         ^-- this creates the .python-version file
+      # pyenv version
+      3.7.2 (set by <snip>/GitHub/kwatsen/xiax/.python-version)
+      3.6.8 (set by <snip>/GitHub/kwatsen/xiax/.python-version)
+      3.5.6 (set by <snip>/GitHub/kwatsen/xiax/.python-version)
+      3.4.9 (set by <snip>/GitHub/kwatsen/xiax/.python-version)
+      2.7.10 (set by <snip>/GitHub/kwatsen/xiax/.python-version)
+
+
+== Run Tests
+
+   In my home (~/) directory:
+     # which detox (no output)
+     # which tox (no output)
+     # pip install --user detox
+
+     The script virtualenv is installed in '/Users/kent/.local/bin' which is not on PATH.
+     Consider adding this directory to PATH or, if you prefer to suppress this warning, use --no-warn-script-location.
+     The scripts tox and tox-quickstart are installed in '/Users/kent/.local/bin' which is not on PATH.
+     Consider adding this directory to PATH or, if you prefer to suppress this warning, use --no-warn-script-location.
+
+     The script detox is installed in '/Users/kent/.local/bin' which is not on PATH.
+     Consider adding this directory to PATH or, if you prefer to suppress this warning, use --no-warn-script-location.
+
+     # which detox (no output)
+     # which tox (no output)
+
+  Note: comments above discuss adding stuff to path.
+  I thought (from before) that this would help, but it didn't:
+    Ref: https://pypi.org/project/tox-pyenv/)
+     # pip install --user tox-pyenv
+       // THE OUTPUT JUST SAID THAT EVERYTHING WAS ALREADY INSTALLED
+     # which detox (no output)
+     # which tox (no output)
+
+  Okay, adding paths to PATH:
+     # echo '' >> ~/.bash_profile
+     # echo '## for tox, detox, and virtualenv' >> ~/.bash_profile
+     # echo 'export PATH="/Users/kent/.local/bin:$PATH"' >> ~/.bash_profile
+
+  Opening a new shell:
+     # which detox
+     /Users/kent/.local/bin/detox
+     # which tox
+     /Users/kent/.local/bin/tox
+
+  Now, in "xiax" directory: (where the .python-version file is located)
+
+     # tox (sequential)  [NOTE: first time takes awhile as it needs to build the ~/xiax/.tox/py<ver> dirs]
+     # detox (parallel)
+   
+  OR PICK JUST ONE:
+   
+     # tox -e <env>  (e.g., tox -e py35)
+
+
+
+
+== install pytest (tox didn't need it?)
+
+  # pip install -U pytest
+  # pytest (failed, can't find module...)
+
+  Hmmm, maybe "install" it?
+
+  # python setup.py sdist
+  # python setup.py test
+  # python setup.py develop|install
+    ^-- ref: https://docs.pytest.org/en/latest/goodpractices.html
+         ^-- SHOULD HAVE USED `pip install -e .` ???
+         ^-- "develop" creates symlinks & /Users/kent/.pyenv/versions/3.7.2/bin/xiax
+             # /Users/kent/.pyenv/versions/3.7.2/bin/xiax -s foo   WORKS!
+  # pytest (WORKS NOW ALSO)
+
+
+
+
+
+
+
+
 # cat ~/.pypirc
-
-# . env.sh 
-#  py.test
-
-# python setup.py sdist
-# python setup.py test
-# python setup.py install
-  - created /Users/Kent/.venv/python3/bin/xiax
-  - running works!
-      (python3) $ xiax -s sdg 
-
-SHOULD'VE USED THE -e PARAM SO AS TO CREATE AN "EDIT" VERSION (with symlinks, etc.)
-(from https://docs.pytest.org/en/latest/goodpractices.html)
-# pip install -e .
-
 
 
 From: http://www.discoversdk.com/blog/how-to-create-a-new-python-module
-Publish to PyPi
-  - python setup.py register -r pypitest         # THIS FAILED: reg deprecated, use twine instead...
-  - python setup.py sdist upload -r pypitest
-  - python setup.py register -r pypi             # THIS FAILED: reg deprecated, use twine instead...
-  - python setup.py sdist upload -r pypi
-
-
-Or this?  works with the ~/.pypirc file?  
-WHAT ABOUT THE UploadCommand in setup.py?????????
-From https://blog.jetbrains.com/pycharm/2017/05/how-to-publish-your-package-on-pypi/
-# twine upload --repository-url https://test.pypi.org/legacy/ dist/*
-  - twine register dist/*
+Publish to PyPi (these worked! w/ ~/.pypirc)
+  - twine upload dist/* -r testpypi
   - twine upload dist/*
 
-# twine register dist/xiax-0.0.1.tar.gz -r xiax
-    InvalidConfiguration: Missing 'xiax' section from the configuration file
-    or not a complete URL in --repository-url.
-    Maybe you have a out-dated '~/.pypirc' format?
-    more info: https://docs.python.org/distutils/packageindex.html#pypirc
+   WHAT ABOUT THE UploadCommand in setup.py?????????
+   From https://blog.jetbrains.com/pycharm/2017/05/how-to-publish-your-package-on-pypi/
+   
+   # AH-HA!  No need to register via commandline now, just upload now...  (after registering via web)
+   HTTPError: 410 Client Error: Project pre-registration is no longer required or
+   supported, upload your files instead. for url: https://test.pypi.org/legacy/
 
-# twine upload dist/* -r xiax
+
 
 
 TOX   (still NOT WORKING)
@@ -46,9 +169,7 @@ TOX   (still NOT WORKING)
 - https://blog.ionelmc.ro/2014/05/25/python-packaging
     ^-- claims that `python setup.py test` is a FAILED EXPERIEMENT
 
-BOTH OF THESE WORKED
-# tox -e py37
-# tox -e py37 bootstrap
 
-THIS DOES NOT WORK (because it tries to load py27 - DON'T KNOW WHY!)
-tox -e bootstrap
+
+
+ 

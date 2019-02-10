@@ -16,7 +16,7 @@ DESCRIPTION = "Extract or insert artwork/sourcecode from/to an `xml2rfc` XML doc
 URL = 'https://github.com/kwatsen/xiax'
 EMAIL = 'kent@watsen.net'
 AUTHOR = 'Kent Watsen'
-REQUIRES_PYTHON = '>=3.7.0'
+REQUIRES_PYTHON = '>=2.7,!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*'
 
 REQUIRED = [
 ]
@@ -91,10 +91,13 @@ setup(
     author=AUTHOR,
     author_email=EMAIL,
     python_requires=REQUIRES_PYTHON,
-    packages=find_packages("src"),
-    package_dir = {"": "src"},
+    #packages=find_packages("src"),
+    #package_dir = {"": "src"},
+    packages=['xiax'],
+    package_dir={'xiax': 'src/xiax'},
+    package_data={'xiax': ['data/*.rng']},
     include_package_data = True,
-    keywords = ["ietf", "rfc", "artwork", "sourcecode", "extraction", "insertion"],
+    keywords = ["ietf", "rfc", "artwork", "sourcecode", "extraction", "insertion", "folding", "unfolding"],
     install_requires=REQUIRED,
     extras_require=EXTRAS,
     setup_requires = ["pytest-runner"],
@@ -108,7 +111,11 @@ setup(
       # Full list: https://pypi.python.org/pypi?%3Aaction=list_classifiers
       "Development Status :: 2 - Pre-Alpha",
       "License :: OSI Approved :: ISC License (ISCL)",
-      "Programming Language :: Python :: 3.7"
+      "Programming Language :: Python :: 3.7",
+      "Programming Language :: Python :: 3.6",
+      "Programming Language :: Python :: 3.5",
+      "Programming Language :: Python :: 3.4",
+      "Programming Language :: Python :: 2.7"
     ],
     # $ setup.py publish support.
     cmdclass={

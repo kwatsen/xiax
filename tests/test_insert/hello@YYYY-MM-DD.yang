@@ -1,0 +1,36 @@
+module ex-widgets {
+  yang-version 1.1;
+
+  namespace "http://example.com/ns/example-widgets";
+  prefix "ectu";
+
+  organization
+   "Example Corporation";
+
+  contact
+   "Author: YANG Designer <mailto:yang.designer@example.com>";
+
+  description
+   "Something important...";
+
+  revision "1001-01-01" {
+    description
+     "Initial version";
+  }
+
+  container widgets {
+    description
+      "A container of widgets.";
+    list widget {
+      key name;
+      leaf name {
+        type string;
+        description
+          "An arbitrary name for this widget.";
+      }
+      description
+        "A widget.";
+    }
+  }
+}
+

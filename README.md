@@ -25,16 +25,16 @@ Exit status code: 0 on success, non-0 on error.  Error output goes to stderr.
 
 ## Auto-sensing Mode:
 
-The "source" XML file is scanned for any <artwork> or <sourcecode>
+The "source" XML file is scanned for any `<artwork>` or `<sourcecode>`
 elements containing an "originalSrc" attribute.  If any "originalSrc" 
 attribute is found, then extraction proceeds, else insertion proceeds.
 
 ## Extraction:
 
-Extract the content of <artwork> and <sourcecode> elements, having an
+Extract the content of `<artwork>` and `<sourcecode>` elements, having an
 "originalSrc" attribute set, into the specified extraction directory.
 If no extraction directory is specified, the current working directory
-is used.  The <artwork> and <sourcecode> elements are extracted into
+is used.  The `<artwork>` and `<sourcecode>` elements are extracted into
 subdirectories as specified by the "originalSrc" attribute.  Directories
 will be created as needed.
 
@@ -52,7 +52,7 @@ The source XML file is never modified.
 
 ## Insertion:
 
-Insert local file content into <artwork> and <sourcecode> elements,
+Insert local file content into `<artwork>` and `<sourcecode>` elements,
 saving the resulting XML "packed" file into "dst".  If "dst" does
 not end with ".xml", it is assumed to represent a directory, in which
 case a file having the same name as the source file will be saved into
@@ -61,7 +61,7 @@ not specified, then the current working directory is used.  In any
 case, the resulting destination XML file must be different than the
 source XML file.
     
-In the source XML file, only <artwork> and <sourcecode> elements
+In the source XML file, only `<artwork>` and `<sourcecode>` elements
 having a "src" attribute representing a local file are processed.
 Local files are specified by using of the "file" scheme or by using
 no scheme.
@@ -86,8 +86,8 @@ Invalid "src" attribute examples:
   - src="file://c/ex-ascii-art.txt"
   - src="file:a/../../ex-ascii-art.txt"
 
-It is an error if there is preexisting content for the <artwork>
-or <sourcecode> element.  This is consistent with RFC 7991 Section
+It is an error if there is preexisting content for the `<artwork>`
+or `<sourcecode>` element.  This is consistent with RFC 7991 Section
 2.48.3, and not in conflict with Section 2.5.6, which has Errata
 filed against it, since "src" attributes containing a scheme (e.g.,
 "https") are skipped, thus preserving the "fallback" support
@@ -96,12 +96,12 @@ content while preserving a "src" attribute to binary (i.e., SVG)
 content has yet to be defined.
 
 The result of the insertion process is the creation of the specified
-destination XML file in which each <artwork> and <sourcecode> element
+destination XML file in which each `<artwork>` and `<sourcecode>` element
 processed will have i) the "src" attribute renamed to "originalSrc"
 and ii) the content of the referenced file as its text, wrapped by
 wrapped by character data (CDATA) tags.  It the artwork/sourcecode
 element has the attribute markers="true", then the text will also
-be wrapped by the <CODE BEGINS> and <CODE ENDS> tags described in
+be wrapped by the `<CODE BEGINS>` and `<CODE ENDS>` tags described in
 RFC 8407 Section 3.2.
  
 It is an error for the destination file to already exist, unless

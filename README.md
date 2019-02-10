@@ -9,8 +9,7 @@ usage: xiax [-h] [-v] [-d] [-f] source [destination]
 eXtract or Insert artwork And sourcecode to/from Xml
 
 positional arguments:
-  source         source XML document from which to extract from or to insert
-                 into.
+  source         source XML document to extract from or insert into.
   destination    destination file or directory. If unspecified, then the
                  current working directory is assumed.
 

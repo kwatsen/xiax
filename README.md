@@ -103,7 +103,7 @@ wrapped by character data (CDATA) tags.  It the artwork/sourcecode
 element has the attribute markers="true", then the text will also
 be wrapped by the <CODE BEGINS> and <CODE ENDS> tags described in
 RFC 8407 Section 3.2.
-
+ 
 It is an error for the destination file to already exist, unless
 the "force" flag is specified, in which case the destination file
 will be overwritten. 
@@ -126,9 +126,3 @@ Primarily developed to support`xml2rfc` v2 [RFC 7749] and v3 [RFC 7991]
 based XML documents, and the IETF RFC publishing process in general, 
 but may be used for any XML based document containing elements called 
 "artwork" or "sourcecode". 
-
-
-
-
-
-

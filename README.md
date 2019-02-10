@@ -10,8 +10,8 @@ eXtract or Insert artwork And sourcecode to/from Xml
 
 positional arguments:
   source         source XML document to extract from or insert into.
-  destination    destination file or directory. If unspecified, then the
-                 current working directory is assumed.
+  destination    destination file or directory. If unspecified, then
+                 the current working directory is assumed.
 
 optional arguments:
   -h, --help     show this help message and exit

@@ -207,7 +207,7 @@ draft-<foo>-03
 ## Details
 
 This section describes the states and transitions for the state machine
-diagram provided at the top of this page. 
+diagram provided at the top of this page.
 
 
 ### States
@@ -218,7 +218,7 @@ There are 3 states: Source, Primed, and Ready.
 
 The "source" state represents the state of the author's files, as they
 might be checked into a source control system (i.e., GitHub).  Notably,
-the files in this state cannot bind any specific numbers, neither the 
+the files in this state cannot bind any specific numbers, neither the
 draft version (e.g. -03) or the current date.
 
 Example source tree structure:
@@ -257,7 +257,7 @@ Notes:
 
 The "primed" state is an intermediate state whereby:
 
-  - All referenced artwork and source code files having the string 
+  - All referenced artwork and source code files having the string
     "YYYY-MM-DD" in their filename are updated as follows:
 
     * the "YYYY-MM-DD" in the filename is replaced.
@@ -275,7 +275,7 @@ source code files have proper names and content.
 
 The "ready" state is the final submission-worthy state whereby:
 
-  - `-primed` (both in the filename and the `docName` attribute) is 
+  - `-primed` (both in the filename and the `docName` attribute) is
     converted to the appropriate draft revision number (e.g., from
     `git tag`).
 
@@ -283,10 +283,9 @@ The "ready" state is the final submission-worthy state whereby:
     referring to a local file are "packed" into the XML document
     (i.e., their content is the XML element's "text" value), wrapped
     by CDATA tags (if needed), and folded (if needed, and supported),
-    and including the <CODE BEGINS> and <CODE ENDS> tags (if requested,
+    and including the `<CODE BEGINS>` and `<CODE ENDS>` tags (if requested,
     via the `markers="true"` attribute).
-
-
+ 
 
 ### Transitions
 
@@ -299,7 +298,7 @@ The "prime" transition performs the following actions:
 
   - in the source XML file:
 
-      * the "-latest" suffix in the `docName` attribute is replaced 
+      * the "-latest" suffix in the `docName` attribute is replaced
         with "-primed".
       * any occurrence of "YYYY-MM-DD" within the file is replace,
         regardless if specific to an <artwork> or <sourcecode> element
@@ -307,7 +306,7 @@ The "prime" transition performs the following actions:
 
     and the source XML file is saved using the "-primed" suffix.
 
-  - in any referenced artwork and source code files having the string 
+  - in any referenced artwork and source code files having the string
     "YYYY-MM-DD" in their filename:
 
       * any occurrence of "YYYY-MM-DD" within the file is replace.
@@ -324,10 +323,10 @@ Note: the priming step is a no-op if none of the above is true, which
 
 The "pack" transition performs the "insertion" logic described above.
 
-The ability to auto-generate derived artwork (e.g., tree diagrams 
+The ability to auto-generate derived artwork (e.g., tree diagrams
 [RFC 8340]) will be included in a subsequent update (FIXME).
 
-The ability to auto-fold sourcecode will be included in a subsequent 
+The ability to auto-fold sourcecode will be included in a subsequent
 update (FIXME).
 
 The ability to execute validation logic as a pre-step will be included
@@ -337,20 +336,20 @@ in a subsequent update (FIXME).
 
 #### Unpack
 
-The "unpack" transition reverts the "pack" operation.  Essentially, it 
-takes a single XML file as input and populates a directory with the 
+The "unpack" transition reverts the "pack" operation.  Essentially, it
+takes a single XML file as input and populates a directory with the
 content of the <artwork> and <sourcecode> elements.
 
-The extraction of the artwork/sourecode elements alone is sufficient 
-for supporting reviews (and validation), but the "primed" XML file can 
-optionally be written out, if the "destination" parameter ends with 
+The extraction of the artwork/sourecode elements alone is sufficient
+for supporting reviews (and validation), but the "primed" XML file can
+optionally be written out, if the "destination" parameter ends with
 ".xml".
 
-The ability to re-generate derived artwork (e.g., tree diagrams) and 
+The ability to re-generate derived artwork (e.g., tree diagrams) and
 compare to artwork found in the draft will be included in a subsequent
 update (FIXME).
 
-The ability to auto-fold sourcecode will be included in a subsequent 
+The ability to auto-fold sourcecode will be included in a subsequent
 update (FIXME).
 
 The ability to execute validation logic as a pre-step will be included

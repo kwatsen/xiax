@@ -3,6 +3,6 @@
 .python-version
 .tox/
 dist/
-src/*.egg-info/
+*.egg-info/
 __pycache__/
-
+._*

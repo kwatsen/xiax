@@ -18,11 +18,9 @@ EMAIL = 'kent@watsen.net'
 AUTHOR = 'Kent Watsen'
 REQUIRES_PYTHON = '>=2.7,!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*'
 
-REQUIRED = [
-]
+REQUIRED = [ 'lxml' ]
 
-EXTRAS = {
-}
+EXTRAS = { }
 
 HERE = os.path.abspath(os.path.dirname(__file__))
 

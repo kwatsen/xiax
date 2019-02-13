@@ -11,7 +11,7 @@ v2 [RFC 7749] and v3 [RFC 7991] documents.
   * For authors   : automates common steps.
   * For reviewers : facilitates validations.
 
-
+```
   +----------+              +----------+    pack     +---------+
   |          |   prime      |          |------------>|         |
   |  source  | -----------> |  primed  |             |  ready  |
@@ -22,7 +22,7 @@ v2 [RFC 7749] and v3 [RFC 7991] documents.
                               |      |
                               +------+
                               validate
-
+```
 See bottom for [details].
 
 

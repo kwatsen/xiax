@@ -22,8 +22,10 @@ v2 [RFC 7749] and v3 [RFC 7991] documents.
                               +------+
                               validate
 ```
-See bottom for [details].
 
+## Installation
+
+    `pip install xiax`
 
 ## Usage
 

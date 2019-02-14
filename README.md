@@ -54,10 +54,10 @@ The "source" XML file is scanned for any `<artwork>` or `<sourcecode>`
 elements containing an "originalSrc" attribute.  If any "originalSrc" 
 attribute is found, then extraction proceeds, else insertion proceeds.
 
-Note, referring to the diagram above:
+Referring to the diagram above:
 
- - insertion includes both priming and packing.
- - extraction includes only unpacking.
+ - "insertion" refers to both priming and packing.
+ - "extraction" refers only to unpacking.
 
 
 ## Insertion:
@@ -66,24 +66,34 @@ Insert local file content from `<artwork>` and `<sourcecode>` elements
 into "source", saving the resulting "packed" XML file into as described
 below.
 
+The "source" parameter must refer to an XML file that may be "raw" or
+"primed" (i.e., external tools can do the priming step).  If it is
+intended that the destination filename be determined (see "destination"
+parameter below), a primed filename should match the pattern
+`.*[0-9]{2}.xml`, whereas a raw filename should have the form
+"foo-latest.xml" or "foo.xml", in either case the result is
+"foo-00.xml", assuming revision "00".
+
 If the "destination" parameter ends with ".xml", the argument is used 
 to determined both the destination directory, as well as the draft's 
 revision number.  For instance, "./foo-03.xml" would set the current
-working directory and "03" (as the revision number) to be used.
+working directory to be the destination directory, and "03" as the
+revision number to be used.
 
 If the "destination" parameter is present, but does not end with ".xml",
 then the argument is used only to determined the destination directory.
 The system will try to determine the draft revision number as the next
 logical `git tag` (see [Git Tagging] below) and, if that doesn't work,
-assumes "-00".
+will assume "-00".
 
 If the "destination" parameter is not provided, then the current working
 directory is used (same as if "./" had been passed).
 
-The draft's revision number is used only to i) set the destination 
-filename, if not specified, and ii) set the `docName` attribute in the
-destination file.  Destination directories are created as needed.
-    
+In the source XML file, the `<rfc>` element `docName` attribute may
+include the suffix "-latest", which will be replaced with the determined
+revision number.  The only time `docName` should not end with "-latest"
+is when the source XML file has been pre-primed.
+
 In the source XML file, only `<artwork>` and `<sourcecode>` elements
 having a `src` attribute representing a local file are processed.
 Local files are specified by using of the "file" scheme or by using
@@ -144,29 +154,28 @@ The source XML file is never modified.
 
 Extract the content of `<artwork>` and `<sourcecode>` elements, having an
 "originalSrc" attribute set, into the specified extraction directory.
-If no extraction directory is specified, the current working directory
-is used.  The `<artwork>` and `<sourcecode>` elements are extracted into
-subdirectories as specified by the "originalSrc" attribute.  Directories
-will be created as needed.
 
-If the "destination" parameter is ends with ".xml", the argument is used 
-to determined both the destination directory, as well as the unpacked
-draft name.
+If the "destination" parameter ends with ".xml", the argument is used 
+to determined both the extraction directory, as well as the unpacked
+draft name.  Note: the "unpacked" (or "primed") XML file is extracted
+only when the destination parameter ends with ".xml".
 
 If the "destination" parameter is present, but does not end with ".xml",
-then the argument is used only to determined the destination directory
-for unpacking the artwork and sourcecode elements (the unpacked draft
-XML file will not be saved).
+then the argument is used only to determined the extraction directory
+(the unpacked draft XML file will not be saved).
 
 If the "destination" parameter is not provided, then the current working
-directory is used.
+directory is used as the extraction directory.  This is the same as if
+"./" were passed.
+
+Only `<artwork>` and `<sourcecode>` elements have the "originalSrc"
+attribute set are extracted.  The extracted files are relative to the 
+extraction directory.  Subdirectories will be created as needed.
 
 It is an error if any file already exists, unless the "force" flag is
 specified, in which case the file will be overwritten. 
 
 The source XML file is never modified.
-
-
 
 
 ## Round-tripping
@@ -177,7 +186,6 @@ It is possible to run `xiax` in a loop:
   # xiax -f -s packed.xml -d unpacked.xml
   # xiax -f -s unpacked.xml -d packed.xml
 ```
-
 
 
 ## Git Tagging
@@ -197,8 +205,6 @@ draft-<foo>-01
 draft-<foo>-02
 draft-<foo>-03
 ```
-
-
 
 
 
@@ -232,43 +238,13 @@ Example source tree structure:
       etc.
 ```
 
-Notes:
-
-  * The "-latest" suffix on the source XML filename is optional.
-
-  * Inside the source XML file:
-
-     - the `docName` attribute must end with "-latest".
-       (.e.g, `docName="draft-attrib-wg-foobar-latest"`).
-
-     - for `<sourcecode>` and `<artwork>` elements referring to files
-       having "YYYY-MM-DD" in their names, the string "YYYY-MM-DD"
-       must be included (e.g. `src="foobar@YYYY-MM-DD.yang"`).
-
-       FIXME: this is kind of annoying (much like the "-latest"
-              suffix), worth trying to fix?
-
-  * Inside included files containing dates:
-
-     - the placeholder date "YYYY-MM-DD" must be used (e.g.,
-       `revision "YYYY-MM-DD" { ... }`).
-
-
 #### Primed
 
 The "primed" state is an intermediate state whereby:
 
-  - All referenced artwork and source code files having the string
-    "YYYY-MM-DD" in their filename are updated as follows:
-
-    * the "YYYY-MM-DD" in the filename is replaced (new files created)
-    * any occurrence of "YYYY-MM-DD" within the file is replace (content changed)
-
-  - The source XML file is updated as follows:
-
-    * the "-latest" suffix of the filename is replace with "-primed"
-    * any occurrence of "YYYY-MM-DD" within the file is replace.
-
+  - All "-latest" suffixes are resolved to the determined revision number.
+  - All occurrances or YYYY-MM-DD are resolved to the current date.
+  - All "derived views" (e.g., tree diagrams) have been generated (FIXME: not implemented yet)
 
 It is in this state that validation can occur, as the artwork and
 source code files have proper names and content.
@@ -276,18 +252,9 @@ source code files have proper names and content.
 
 #### Ready
 
-The "ready" state is the final submission-worthy state whereby:
+The "ready" state is the final submission-worthy state whereby there is a
+single XML file that can be submitted to the IETF Submission tool.
 
-  - `-primed` (both in the filename and the `docName` attribute) is
-    converted to the appropriate draft revision number (e.g., from
-    `git tag`).
-
-  - all <artwork> and <sourcecode> elements having `src` attributes
-    referring to a local file are "packed" into the XML document
-    (i.e., their content is the XML element's "text" value), wrapped
-    by CDATA tags (if needed), and folded (if needed, and supported),
-    and including the `<CODE BEGINS>` and `<CODE ENDS>` tags (if requested,
-    via the `markers="true"` attribute).
  
 
 ### Transitions
@@ -299,58 +266,38 @@ There are 4 transitions: Primed, Pack, Unpack, and Ready.
 
 The "prime" transition performs the following actions:
 
-  - in the source XML file:
-
-      * the "-latest" suffix in the `docName` attribute is replaced
-        with "-primed".
-      * any occurrence of "YYYY-MM-DD" within the file is replace,
-        regardless if specific to an <artwork> or <sourcecode> element
-        or not.
-
-    and the source XML file is saved using the "-primed" suffix.
-
-  - in any referenced artwork and source code files having the string
-    "YYYY-MM-DD" in their filename:
+  - for in any locally referenced artwork and source code files having
+    "YYYY-MM-DD" in their filename
 
       * any occurrence of "YYYY-MM-DD" within the file is replace.
+      * the modified file is saved with the "YYYY-MM-DD" in the filename
+        is replaced with the current date.
 
-    after which the file is saved with the "YYYY-MM-DD" in the filename
-    is replaced with the current date's value.
-
-
-Note: the priming step is a no-op if none of the above is true, which
-      enables round-tripping between the "primed" and "ready" states.
+The ability to auto-generate derived artwork (e.g., tree diagrams
+[RFC 8340]) will be included in a subsequent update (FIXME).
 
 
 #### Pack
 
 The "pack" transition performs the "insertion" logic described above.
 
-The ability to auto-generate derived artwork (e.g., tree diagrams
-[RFC 8340]) will be included in a subsequent update (FIXME).
+The ability to automatically execute validation logic as a pre-step
+will be included in a subsequent update (FIXME).
 
 The ability to auto-fold sourcecode will be included in a subsequent
 update (FIXME).
 
-The ability to execute validation logic as a pre-step will be included
-in a subsequent update (FIXME).
-
-
 
 #### Unpack
 
-The "unpack" transition reverts the "pack" operation.  Essentially, it
-takes a single XML file as input and populates a directory with the
-content of the <artwork> and <sourcecode> elements.
+The "unpack" transition reverts the "pack" operation.  A single XML
+file is provided as input and the extraction directory is populated
+with the content of the <artwork> and <sourcecode> elements and,
+optionally, the unpacked/primed XML file.
 
 The extraction of the artwork/sourecode elements alone is sufficient
-for supporting reviews (and validation), but the "primed" XML file can
-optionally be written out, if the "destination" parameter ends with
-".xml".
-
-The ability to re-generate derived artwork (e.g., tree diagrams) and
-compare to artwork found in the draft will be included in a subsequent
-update (FIXME).
+for reviews (and validation).  The extraction of the unpacked/primed
+XML file is only interesting for round-tripping purposes.
 
 The ability to auto-unfold sourcecode will be included in a subsequent
 update (FIXME).
@@ -366,7 +313,9 @@ This transition is not implemented yet, due to uncertainty for how to
 encode the validation logic into the "ready" XML file, or even if that
 makes sense. (FIXME)
 
+Validation will include three forms:
 
-
-
+  - is a schema file a valid schema file
+  - is an instance data file valid to a schema file
+  - is a derived view (e.g., tree diagram) valid to a schema file
 

@@ -12,13 +12,12 @@ v2 [RFC 7749] and v3 [RFC 7991] documents.
   * For reviewers : facilitates validations.
 
 ```
-  +----------+              +----------+    pack     +---------+
-  |          |   prime      |          |------------>|         |
-  |  source  | -----------> |  primed  |             |  ready  |
-  |          |              |          | <---------- |         |
-  +----------+              +----------+    unpack   +---------+
+  +----------+              +----------+     pack      +---------+
+  |          |    prime     |          | ------------> |         |
+  |  source  | -----------> |  primed  |               |  ready  |
+  |          |              |          | <------------ |         |
+  +----------+              +----------+     unpack    +---------+
                               |      ^
-                              |      |
                               |      |
                               +------+
                               validate
@@ -262,12 +261,14 @@ The "primed" state is an intermediate state whereby:
   - All referenced artwork and source code files having the string
     "YYYY-MM-DD" in their filename are updated as follows:
 
-    * the "YYYY-MM-DD" in the filename is replaced.
-    * any occurrence of "YYYY-MM-DD" within the file is replace.
+    * the "YYYY-MM-DD" in the filename is replaced (new files created)
+    * any occurrence of "YYYY-MM-DD" within the file is replace (content changed)
 
   - The source XML file is updated as follows:
 
     * the "-latest" suffix of the filename is replace with "-primed"
+    * any occurrence of "YYYY-MM-DD" within the file is replace.
+
 
 It is in this state that validation can occur, as the artwork and
 source code files have proper names and content.

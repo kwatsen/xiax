@@ -79,8 +79,7 @@ logical `git tag` (see [Git Tagging] below) and, if that doesn't work,
 assumes "-00".
 
 If the "destination" parameter is not provided, then the current working
-directory is used, but note that this can only work when [Git Tagging]
-is used.
+directory is used (same as if "./" had been passed).
 
 The draft's revision number is used only to i) set the destination 
 filename, if not specified, and ii) set the `docName` attribute in the
@@ -247,6 +246,9 @@ Notes:
        having "YYYY-MM-DD" in their names, the string "YYYY-MM-DD"
        must be included (e.g. `src="foobar@YYYY-MM-DD.yang"`).
 
+       FIXME: this is kind of annoying (much like the "-latest"
+              suffix), worth trying to fix?
+
   * Inside included files containing dates:
 
      - the placeholder date "YYYY-MM-DD" must be used (e.g.,
@@ -349,10 +351,10 @@ The ability to re-generate derived artwork (e.g., tree diagrams) and
 compare to artwork found in the draft will be included in a subsequent
 update (FIXME).
 
-The ability to auto-fold sourcecode will be included in a subsequent
+The ability to auto-unfold sourcecode will be included in a subsequent
 update (FIXME).
 
-The ability to execute validation logic as a pre-step will be included
+The ability to execute validation logic as a post-step will be included
 in a subsequent update (FIXME).
 
 

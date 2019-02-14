@@ -1,6 +1,7 @@
 from __future__ import unicode_literals
 from distutils import dir_util
 from pytest import fixture
+from datetime import date
 import difflib
 import filecmp
 import xiax
@@ -28,12 +29,22 @@ def datadir(tmpdir, request):
 ## Positive tests
 
 def test_insert_okay_v2(datadir):
-  insert_okay_v2_src = datadir.join('insert-okay-v2-src.xml')
-  insert_okay_v2_dst = datadir.join('insert-okay-v2-dst.xml')
-  tmp_dst = datadir.join('tmp_dst.xml')
+  insert_okay_v2_src = str(datadir.join('insert-okay-v2-src.xml'))
+  insert_okay_v2_dst = str(datadir.join('insert-okay-v2-dst.xml'))
+  insert_okay_v2_dst2 = str(datadir.join('insert-okay-v2-dst2.xml'))
+  tmp_dst = str(datadir.join('tmp_dst-00.xml'))
   result = xiax.process(True, False, str(insert_okay_v2_src), str(tmp_dst))
   assert result == 0
-  result = filecmp.cmp(str(insert_okay_v2_dst), str(tmp_dst))
+
+  # s/YYYY-MM-DD/<today>/g
+  YYYY_MM_DD = date.today().strftime("%Y-%m-%d")
+  with open(insert_okay_v2_dst) as infile, open(insert_okay_v2_dst2, 'w') as outfile:
+    for line in infile:
+      line = line.replace("YYYY-MM-DD", YYYY_MM_DD)
+      outfile.write(line)
+
+  # now do the comparison
+  result = filecmp.cmp(str(insert_okay_v2_dst2), str(tmp_dst))
   if result == False:
     file1 = open(insert_okay_v2_dst, 'r')
     file2 = open(tmp_dst, 'r')
@@ -47,7 +58,7 @@ def test_insert_okay_v2(datadir):
 
 def test_insert_skip1_v2(datadir):
   insert_skip_v2_src = datadir.join('insert-skip-v2-src.xml')
-  tmp_dst = datadir.join('tmp_dst.xml')
+  tmp_dst = datadir.join('tmp_dst-00.xml')
   result = xiax.process(True, False, str(insert_skip_v2_src), str(tmp_dst))
   assert result == 0
   result = filecmp.cmp(str(insert_skip_v2_src), str(tmp_dst))

@@ -123,6 +123,14 @@
 
 
 
+== if installing new dependency (e.g., lxml), force recreation of the virtual environment:
+  ref: https://tox.readthedocs.io/en/latest/example/basic.html#forcing-re-creation-of-virtual-environments
+ # tox --recreate -e py37 
+ # tox --recreate -e py36
+ # etc. 
+
+
+
 == install pytest (tox didn't need it?)
 
   # pip install -U pytest
@@ -157,7 +165,7 @@ Publish to PyPi (these worked! w/ ~/.pypirc)
    WHAT ABOUT THE UploadCommand in setup.py?????????
    From https://blog.jetbrains.com/pycharm/2017/05/how-to-publish-your-package-on-pypi/
    
-   # AH-HA!  No need to register via commandline now, just upload now...  (after registering via web)
+   # AH-HA!  No need to register via command-line now, just upload now...  (after registering via web)
    HTTPError: 410 Client Error: Project pre-registration is no longer required or
    supported, upload your files instead. for url: https://test.pypi.org/legacy/
 
@@ -167,7 +175,7 @@ Publish to PyPi (these worked! w/ ~/.pypirc)
 TOX   (still NOT WORKING)
 - https://docs.pytest.org/en/latest/goodpractices.html
 - https://blog.ionelmc.ro/2014/05/25/python-packaging
-    ^-- claims that `python setup.py test` is a FAILED EXPERIEMENT
+    ^-- claims that `python setup.py test` is a FAILED EXPERIMENT
 
 
 

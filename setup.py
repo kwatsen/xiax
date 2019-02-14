@@ -18,7 +18,7 @@ EMAIL = 'kent@watsen.net'
 AUTHOR = 'Kent Watsen'
 REQUIRES_PYTHON = '>=2.7,!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*'
 
-REQUIRED = [ 'lxml' ]
+REQUIRED = [ 'lxml', 'gitpython' ]
 
 EXTRAS = { }
 

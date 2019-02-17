@@ -1,0 +1,6 @@
+<xiax-block xmlns="https://watsen.net/xiax">
+  <inclusion>
+    <path>back/section[3]/figure[1]/artwork</path>
+    <originalSrc>hello.txt</originalSrc>
+  </inclusion>
+</xiax-block>

@@ -13,7 +13,7 @@ module ex-widgets {
   description
    "Something important...";
 
-  revision "1001-01-01" {
+  revision "YYYY-MM-DD" {
     description
      "Initial version";
   }

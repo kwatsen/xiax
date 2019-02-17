@@ -1,0 +1,3 @@
+module: foo
+
+<imaging some tree here>

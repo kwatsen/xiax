@@ -1,0 +1,6 @@
+module foo {
+  revision "YYYY-MM-DD" {
+    description
+     "Initial version";
+  }
+}

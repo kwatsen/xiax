@@ -159,6 +159,7 @@
 
 From: http://www.discoversdk.com/blog/how-to-create-a-new-python-module
 Publish to PyPi (these worked! w/ ~/.pypirc)
+  - pip install --user twine
   - twine upload dist/* -r testpypi
   - twine upload dist/*
 

@@ -1,0 +1,6 @@
+module foo {
+  revision "2019-02-16" {
+    description
+     "Initial version";
+  }
+}

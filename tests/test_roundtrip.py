@@ -25,21 +25,24 @@ def datadir(tmpdir, request):
 
 
 def test_roundtrip_diff_dirs(datadir):
-  orig_xml = str(datadir.join('draft-ietf-netconf-crypto-types-03.xml'))
-  extract_xml = str(datadir.join('fakedir1', 'draft-foo-03.xml'))
-  repacked_xml = str(datadir.join('fakedir2', 'draft-bar-03.xml'))
-
+  orig = str(datadir.join('draft-kwatsen-git-xiax-automation.xml'))
+  pack1 = str(datadir.join('fakedir1', 'draft-foo-03.xml'))
+  unpack1 = str(datadir.join('fakedir2', 'draft-foo-03.xml'))
+  pack2 = str(datadir.join('fakedir3', 'draft-foo-03.xml'))
   
-  result = xiax.process(3, False, orig_xml, extract_xml)
+  result = xiax.process(3, False, orig, pack1)
   assert result == 0
 
-  result = xiax.process(3, False, extract_xml, repacked_xml)
+  result = xiax.process(3, False, pack1, unpack1)
   assert result == 0
 
-  result = filecmp.cmp(orig_xml, repacked_xml)
+  result = xiax.process(3, False, unpack1, pack2)
+  assert result == 0
+
+  result = filecmp.cmp(pack1, pack2)
   if result == False:
-    file1 = open(orig_xml, 'r')
-    file2 = open(repacked_xml, 'r')
+    file1 = open(pack1, 'r')
+    file2 = open(pack2, 'r')
     diff = difflib.unified_diff(file1.readlines(), file2.readlines())
     print('\n'.join(list(diff)))
   assert result == True
@@ -47,28 +50,24 @@ def test_roundtrip_diff_dirs(datadir):
 
 
 def test_roundtrip_same_dir(datadir):
-  orig_xml = str(datadir.join('draft-ietf-netconf-crypto-types-03.xml'))
-  extract_xml = str(datadir.join('draft-foo-03.xml'))
-  repacked_xml = str(datadir.join('draft-bar-03.xml'))
-  extract_xml2 = str(datadir.join('draft-baz-03.xml'))
-  repacked_xml2 = str(datadir.join('draft-faz-03.xml'))
+  orig = str(datadir.join('draft-kwatsen-git-xiax-automation.xml'))
+  pack1 = str(datadir.join('packed-03.xml'))
+  unpack1 = str(datadir.join('unpacked-03.xml'))
+  pack2 = str(datadir.join('packed-03.xml'))
 
-  result = xiax.process(3, False, orig_xml, extract_xml)
+  result = xiax.process(3, False, orig, pack1)
   assert result == 0
 
-  result = xiax.process(3, False, extract_xml, repacked_xml)
+  result = xiax.process(3, True, pack1, unpack1)
   assert result == 0
 
-  result = xiax.process(3, True, repacked_xml, extract_xml2)   # force == true
+  result = xiax.process(3, True, unpack1, pack2)
   assert result == 0
 
-  result = xiax.process(3, False, extract_xml2, repacked_xml2)
-  assert result == 0
-
-  result = filecmp.cmp(orig_xml, repacked_xml2)
+  result = filecmp.cmp(pack1, pack2)
   if result == False:
-    file1 = open(orig_xml, 'r')
-    file2 = open(repacked_xml2, 'r')
+    file1 = open(pack1, 'r')
+    file2 = open(pack2, 'r')
     diff = difflib.unified_diff(file1.readlines(), file2.readlines())
     print('\n'.join(list(diff)))
   assert result == True

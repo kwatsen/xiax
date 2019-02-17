@@ -1,0 +1,360 @@
+<!DOCTYPE rfc SYSTEM "rfc2629.dtd">
+<?rfc toc="yes"?>
+<?rfc symrefs="yes"?>
+<?rfc sortrefs="yes" ?>
+<?rfc compact="yes"?>
+<?rfc subcompact="no"?>
+<?rfc linkmailto="no" ?>
+<?rfc editing="no" ?>
+<?rfc comments="yes" ?>
+<?rfc inline="yes"?>
+<?rfc rfcedstyle="yes"?>
+<!-- <?rfc-ext allow-markup-in-artwork="yes" ?> what does this do? -->
+<?rfc-ext include-index="no" ?>
+<!--<?rfc strict="no"?> -->
+<rfc category="bcp" ipr="trust200902" docName="draft-kwatsen-git-xiax-automation-latest">
+  <front>
+      <title abbrev="xiax">eXtract or Insert artwork And source code to/from Xml (xiax)</title>
+      <author initials="K.W." surname="Watsen" fullname="Kent Watsen">
+          <organization>Juniper Networks</organization>
+          <address>
+              <email>kwatsen@juniper.net</email>
+          </address>
+      </author>
+      <date/>
+      <area>General</area>
+      <workgroup>GitHub Integration and Tooling (git)</workgroup>
+      <abstract>
+        <t>This document described motivations behind and solutions for tooling
+        to automate the extraction/insertion of artwork/sourcecode to/from `rfc2xml`
+        documents.</t>
+      </abstract>
+  </front>
+  <middle>
+    <section title="Introduction">
+      <t>This document described motivations behind and solutions for tooling
+      to automate the extraction/insertion of artwork and source code to/from
+      `rfc2xml` v2 <xref target="RFC7749"/> and v3 <xref target="RFC7991"/>.</t>
+
+      <t>For authors, adoption of the automation ensures completely up-to-date
+      &lt;artwork&gt; and &lt;sourcecode&gt; inclusions everytime the document
+      is published.</t>
+
+      <t>For reviewers (especially shepherds, doctors, and RFC Editors), use
+      of the automation enables quick verification that the &lt;artwork&gt;
+      and &lt;sourcecode&gt; inclusions are syntactically valid.</t>
+    </section>
+
+    <section title="Applicability Statement">
+      <t>At the time of this writing, `rfc2xml` v3 <xref target="RFC7991"/>
+      is not yet in production, and thus the tooling support described herein
+      is intended to apply to both v2 and v3.</t>
+      <t>Whenever ambiguity may arise, this document will fully writeout text
+      such as "...source code stored in the v2 &lt;artwork&gt; element...".</t>
+    </section>
+
+    <section title="Notationl Conventions">
+      <t>The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL
+      NOT", "SHOULD", "SHOULD NOT", "RECOMMENDED", "NOT RECOMMENDED",
+      "MAY", and "OPTIONAL" in this document are to be interpreted as
+      described in BCP 14 <xref target="RFC2119"/> <xref target="RFC8174"/>
+      when, and only when, they appear in all capitals, as shown here.</t>
+    </section>
+
+    <section title="Terminology">
+      <t>This document uses the following terms (sorted by name):
+        <list style="hanging" hangIndent="4">
+           <t hangText="Artwork:">The term "artwork" is used throughout
+           to represent two-dimensional imagery (e.g., ASCII art), such
+           as would be referenced by the &lt;artwork&gt; element
+           defined in Section 2.5 of <xref target="RFC7991"/>.</t>
+
+           <t hangText="Source code:">The term "source code" is used 
+           throughout to represent a structured sequence of lines, such
+           as would be referenced by the &lt;sourcecode&gt; element
+           defined in Section 2.48 of <xref target="RFC7991"/>.</t>
+        </list>
+      </t>
+    </section>
+
+    <section title="Updates to RFC 7991">
+      <t>This section is just a placeholder for now, but it is expected
+      that <xref target="RFC7991"/> will need to be modified in order
+      to support some of this work.</t>
+      <t>At a minimum, <xref target="RFC7991"/> should be updated to
+      support attributes from other namespaces, such that the `rfc2xml`
+      tool would neither process nor discard them.</t>
+    </section>
+
+    <section title="Motivation">
+      <t>The driving motivation for this work is twofold:
+        <list style="symbols">
+          <t>To ensure the correctness of work-in-progress drafts.</t>
+          <t>To simplify the formal verification process.</t>
+        </list>
+      </t>
+      <t>Firstly, far too often is it seen that authors overlook updating
+      artwork and/or source code in their drafts, leading to confusion and
+      wasting some of the precious little time of other working group
+      members.  While repeated encouragement from chairs and others to
+      embrace automation, it seems that the bar is too high for some authors
+      to bother for their one and perhaps only draft.  It's actually a
+      self-defeating strategy, as the effort invested to do some script-fu
+      would be recouped by the authors themselves over the lifetime of their
+      draft.</t>
+      <t>Next, for formal verifications, the YANG Doctor <xref target="yang-doctors"/>,
+      reviews are first in mind, but the automation is equally useful for any
+      structured syntax other than YANG <xref target="RFC6020"/> <xref target="RFC7950"/>,
+      such as ASN.1 <xref target="ITU.X690.2015"/> and ABNF <xref target="RFC5234"/>
+      <xref target="RFC7405"/>.  That said, publication process experience shows
+      that doctor reviews are often out of synch with the document submitted for
+      publication, sometimes by several draft revisions.  Thusly, it is common 
+      for the draft's shepherd to verify the correctness of inclusions when doing
+      the shepherd writeup. Further, the document may be subsequently updated
+      by IESG and/or RFC Editor reviews, steps for which the automation would
+      continue to support.</t>
+    </section>
+
+    <section title="Previous Work">
+      <t>
+        <list style="symbols">
+          <t>Section 3.2 of <xref target="RFC8407"/> states that normative YANG
+          modules and submodules contained within Internet-Drafts and RFCs must
+          be bracketed by &lt;CODE BEGINS&gt; and &lt;CODE ENDS&gt; markers.
+          Section 3.1.18 of <xref target="I-D.levkowetz-xml2rfc-v3-implementation-notes"/>
+          notes support for this in `xml2rfc` through the use of a `markers`
+          attribute in the &lt;sourcecode&gt; element.   [PS: these markers
+          attempt to support extraction from plain-text documents but, as
+          this document shows, extraction from XML is superior and, besides,
+          there are many interesting things to extract beyond YANG modules.]</t>
+
+          <t>The `xym` <xref target="xym"/> and `rfcstrip` <xref target="rfcstrip"/>
+          utilities have been developed to extract YANG modules from Internet-Drafts
+          and RFCs using the &lt;CODE BEGINS&gt; and &lt;CODE ENDS&gt; markers.</t>
+
+          <t>The RFC Submit <xref target="submit"/> tool has been modified to
+          test YANG modules contained within I-Ds, and the resulting document
+          page in Datatracker [datatracker] displays a new "Yang Validation"
+          field containing a varying color yin-yang symbol (green if no errors,
+          red if errors) along with counts.  This tool is okay for what it is,
+          but it neither aids authors between updates nor validates anything
+          beyond YANG modules.</t>
+
+          <t>The YANG Validator site <xref target="yang-validator"/> provides
+          an Internet-facing service, with a REST-based API, for validating
+          YANG modules in drafts.  Having a REST API enables its use throughout
+          a document's lifecycle but, again, it doesn't validate anything beyond
+          YANG modules.</t>
+        </list>
+      </t>
+    </section>
+
+    <section title="Automated Construction">
+      <t>When asked to build a submittable `rfc2xml` document, the automation
+      should perform the following steps, in order:
+        <list style="numbers">
+          <t>Prime artwork and source code as needed.  Currently, the only two
+          kinds of priming are known to need to be supported:
+            <list style="format %i">
+              <t>Date substitution (e.g., replacing the string "YYYY-MM-DD"
+              with the current date.  This substitution needs to occur both within
+              files and an filenames [Note: it is necessary to not modify the source
+              files.]</t>
+              <t>Generation of derived views (e.g., YANG tree diagrams
+              <xref target="RFC8340"/>).  Technically, the derived views should
+              be generated after the validation (discussed next) but, said
+              generation is rightly part of the "priming" step and, besides,
+              if there is an error, the validation step would catch it still
+              catch it (so no harm).</t>
+            </list>
+          </t>
+          <t>Validate source code and artwork.  This step includes:
+            <list style="format %i">
+              <t>Validating data models (e.g., YANG modules) against the schema
+              describing their syntax.</t>
+              <t>Validating data instance examples (e.g., a snippet of configuration)
+              against the governing data-model (e.g., the aforementioned YANG module).</t>
+              <t>Validating the derived views.  Technically not needed here, since
+              the derived views were just generated in the previous step but, since
+              the same validation logic is used by reviewers (see <xref
+              target="auto-verification"/>) its automatically included here as well.
+              Validating derived views is accomplished by running the script to
+              generate the view and comparing it to the view found in the draft.</t>
+            </list>
+          </t>
+          <t>Pack the final submittable XML file.  This includes:
+            <list style="format %i">
+              <t>Pasting the contents of referenced artwork and sourcecode (per the
+              `src` attribute) into the XML document, and renaming the `src` attrbute
+              to special `originalSrc` attribute (described in Section B.3 of
+              <xref target="RFC7991"/>).  Add the &lt;CODE BEGINS&gt; and &lt;CODE ENDS&gt;
+              markers if the `markers` attribute is present and set to "true".  Add
+              character data (CDATA) wrappers, if needed.  Fold (line wrap) 
+              <xref target="I-D.ietf-netmod-artwork-folding"/> if needed.</t>
+              <t>Date substitutions in the body of the draft, as are often needed
+              due to the previously mentioned artwork and source code level
+              substitutions.</t>
+              <t>Draft revision substitution (i.e., replacing placeholder "-latest"
+              with, e.g., "-03").</t>
+            </list>
+          </t>
+        </list>
+      </t>
+    </section>
+
+    <section title="Automated Verification" anchor="auto-verification">
+      <t>When asked to extract/verify a submitted `rfc2xml` document, the automation
+      should perform the following steps, in order:
+        <list style="numbers">
+          <t>Extract the contents of the &lt;artwork&gt; and &lt;sourcecode&gt;
+          elements, having the `originalSrc` attribute set, into the files
+          specified by the `originalSrc` attribute.</t>
+          <t>Optionally, if requested, save also the "unpacked" XML file</t>
+          <t>At this point, the local directory tree represents the "primed" state,
+          and thus the same validation logic described above can executed again.</t>
+        </list>
+      </t>
+      <t>Reviewers should not trust the validation code is accurate.  The validation
+      code SHOULD be audited for correctness.  That said, the effort to validate the
+      correctness of the validation code is a fraction of the effort is performing
+      the validation manually and, further, it is probably only necessary to spot-check
+      the validation code from time to time.</t>
+    </section>
+
+    <section title="Security Considerations">
+      <t>In order to support auto-generation of derived views and validation of
+      data models and data instance examples, the solution will veer towards
+      allowing the execution of arbitrary scripts.  Whilst it may be possible
+      to audit the scripts prior to their execution, it is expected that such
+      audits would occur less ofter than they should.  Thus it is RECOMMENDED
+      that, instead of arbitrary scripts, parametrization of select commands
+      are provided instead, thus reducing the attack surface to something
+      manageable.</t>
+    </section>
+
+<!--
+    <section title="IANA Considerations">
+      <t>Unlikely</t>
+    </section>
+-->
+
+  </middle>
+
+  <back>
+
+    <references title="Normative References">
+      <?rfc include="reference.RFC.2119.xml"?>
+      <?rfc include="reference.RFC.7991.xml"?>
+      <?rfc include="reference.RFC.8174.xml"?>
+    </references>
+
+
+
+    <references title="Informative References">
+      <?rfc include="reference.RFC.5234.xml"?>
+      <?rfc include="reference.RFC.6020.xml"?>
+      <?rfc include="reference.RFC.7405.xml"?>
+      <?rfc include="reference.RFC.7749.xml"?>
+      <?rfc include="reference.RFC.7950.xml"?>
+      <?rfc include="reference.RFC.8340.xml"?>
+      <?rfc include="reference.RFC.8407.xml"?>
+      <?rfc include="reference.I-D.levkowetz-xml2rfc-v3-implementation-notes"?>
+      <?rfc include="reference.I-D.ietf-netmod-artwork-folding"?>
+
+      <reference anchor="submit" target="https://datatracker.ietf.org/submit">
+        <front><title>Datatracker Internet-Draft Submission Service</title><author/><date/></front>
+      </reference>
+      <reference anchor="rfcstrip" target="https://github.com/mbj4668/rfcstrip">
+        <front><title>The `rfcstrip` GitHub Repository</title><author/><date/></front>
+      </reference>
+      <reference anchor="xiax" target="https://github.com/kwatsen/xiax">
+        <front><title>The `xiax` GitHub Repository</title><author/><date/></front>
+      </reference>
+      <reference anchor="xym" target="https://github.com/xym-tool/xym">
+        <front><title>The `xym` GitHub Repository</title><author/><date/></front>
+      </reference>
+      <reference anchor="yang-doctors" target="https://datatracker.ietf.org/group/yangdoctors/about">
+        <front><title>The YANG Doctors "about" Page</title><author/><date/></front>
+      </reference>
+      <reference anchor="yang-validator" target="http://www.yangvalidator.com">
+        <front><title>The YANG Validator Service</title><author/><date/></front>
+      </reference>
+      <!-- THE FOLLOWING LINE DOESN'T RESOLVE BECAUSE _reference.ITU.X744.1996.xml
+           DOES NOT EXIST HERE: http://xml2rfc.tools.ietf.org/public/rfc/bibxml2/
+           <?rfc include="reference.ITU.X690.2015.xml"?> -->
+      <reference anchor="ITU.X690.2015" target="https://www.itu.int/rec/T-REC-X.690/">
+        <front>
+          <title>Information Technology - ASN.1 encoding rules: Specification of Basic
+          Encoding Rules (BER), Canonical Encoding Rules (CER) and Distinguished
+          Encoding Rules (DER)</title>
+          <author>
+            <organization>International Telecommunication Union</organization>
+          </author>
+          <date month="August" year="2015"/>
+        </front>
+        <seriesInfo name="ITU-T Recommendation X.690," value="ISO/IEC 8825-1"/>
+      </reference>
+
+    </references>
+
+    <section title="Scripting the Generation of Derived Views">
+      <t>FIXME</t>
+    </section>
+
+    <section title="Scripting Validations">
+      <t>FIXME</t>
+    </section>
+
+    <section title="Examples">
+
+      <t>While this entire document has been processed by `xiax` <xref target="xiax"/>,
+      a utility developed by the author of this draft, this section contains specific
+      examples to illustrate everything working.  For full understanding, please see
+      the source code for this draft located at https://github.com/kwatsen/xiax-automation.</t>
+
+      <t>Note that, as this is an `xml2rfc` v2 document, all examples use the
+      `xml2rfc` v2 &lt;artwork&gt; element.</t>
+
+      <figure>
+        <preamble>src="hello.txt"</preamble>
+        <artwork src="hello.txt"/>
+      </figure>
+
+      <figure>
+        <preamble>src="foo@YYYY-MM-DD.yang" &lt;!--xiax:markers="true"--&gt;</preamble>
+        <artwork src="foo@YYYY-MM-DD.yang"/>
+      </figure>
+
+      <figure>
+        <preamble>src="art/foo-tree-diagram.txt"</preamble>
+        <artwork src="art/foo-tree-diagram.txt"/>
+      </figure>
+
+      <figure>
+        <preamble>src="examples/ex-foo.json"</preamble>
+        <artwork src="examples/ex-foo.json"/>
+      </figure>
+
+    </section> <!-- end Examples -->
+
+<!--
+    <section title="Change Log">
+      <section title="I-D to 00">
+        <t>
+          <list style="symbols">
+          </list>
+        </t>
+      </section>
+    </section>
+-->
+
+<!--
+    <section title="Acknowledgements" numbered="no">
+      <t>The author would like to thank for following for lively discussions on
+      list and in the halls (ordered by last name):
+     </t>
+    </section>
+-->
+  
+  </back>
+</rfc>

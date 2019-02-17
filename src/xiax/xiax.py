@@ -4,14 +4,29 @@ import os
 import re
 import sys
 import git
+import gzip
 import errno
+import base64
 import argparse
 import pkg_resources
 from lxml import etree
 from datetime import date
 from . import __version__
+if "2.7" in sys.version:
+  from StringIO import StringIO
 
 """xiax: eXtract or Insert artwork And sourcecode to/from Xml"""
+
+
+block_header = " ##xiax-block:"
+
+
+# Force stable gzip timestamps
+class FakeTime:
+    def time(self):
+        return 1225856967.109
+gzip.time = FakeTime()
+
 
 
 def extract(debug, force, src_path, dst_path):
@@ -41,66 +56,59 @@ def extract(debug, force, src_path, dst_path):
     try:
       #os.makedirs(dst_dir, exist_ok=True)    # exist_ok doesn't exist < 3.4 !!!
       os.makedirs(dst_dir)
-    except OSError as e:
-      if e.errno != errno.EEXIST:  # for python < 3.4
-        template = "Error: an exception occurred while trying to makedir \"" + dst_dir + "\" of type {0} occurred: {1!r}"
-        message = template.format(type(e).__name__, e.args)
+    except Exception as e:
+      e_type, e_val, e_tb = sys.exc_info()
+      if not (e_type == OSError and e.errno == errno.EEXIST):  # for 2.7
+        template = "Error: os.makedirs('{}') failed on {}:{} [{!r}]"
+        message = template.format(dst_dir, os.path.basename(e_tb.tb_frame.f_code.co_filename), e_tb.tb_lineno, e_val)
         print(message, file=sys.stderr)
         return 1
-    except Exception as e:
-      template = "Error: an exception occurred while trying to makedir \"" + dst_dir + "\" of type {0} occurred: {1!r}"
-      message = template.format(type(e).__name__, e.args)
-      print(message, file=sys.stderr)
-      return 1
-
 
   src_doc = etree.parse(src_path) # this won't fail because it suceeded a moment ago in process()
 
-  for el in src_doc.iter('artwork', 'sourcecode'):
-    if 'originalSrc' not in el.attrib:
-      if debug > 1:
-        print("Debug: Skipping the artwork/sourcecode element on line " + str(el.sourceline) + " because it"
-              + "  doesn't have an 'originalSrc' attribute.")
-      continue
 
+  # extract the xiax-block
+  for el in src_doc.getroot().iterchildren(etree.Comment):
+  #for el in doc.xpath('/rfc/comment()'):
+    if block_header in el.text:
+      text=el.text.replace(block_header + "\n", "")
+      decoded_str = base64.decodestring(text.encode('utf-8'))
+      if "2.7" in sys.version:
+        in_file = StringIO()
+        in_file.write(decoded_str)
+        in_file.seek(0)
+        gzip_file = gzip.GzipFile(fileobj=in_file, mode='r')
+        data = gzip_file.read()
+        data = data.decode('utf-8')
+        gzip_file.close()
+      else:
+        data=gzip.decompress(decoded_str) 
+      xiax_block = etree.fromstring(data)
+      src_doc.getroot().remove(el) # in case dst XML file be saved
+    
+
+  for inclusion in xiax_block.findall("a:inclusion", {'a':"https://watsen.net/xiax"}):
+    p = inclusion[0].text  # [0] is the 'path' child
+    el = src_doc.find(p)
     if el.text == None:
       print("Error: no content exists for the artwork/sourcecode element on line " + str(el.sourceline)
             + " having 'originalSrc' value \"" + attrib_orig + "\".", file=sys.stderr)
       return 1
 
-    if 'src' in el.attrib:
-      if dst_file != None:
-        print("Error: the \"src\" attribute is already set for the artwork/sourcecode element on line "
-              + str(el.sourceline) + " having 'originalSrc' value \"" + attrib_orig + "\".", file=sys.stderr)
-        return 1
-      else:
-        print("Warning: the \"src\" attribute is set for the artwork/sourcecode element on line "
-              + str(el.sourceline) + " having 'originalSrc' value \"" + attrib_orig + "\".  This"
-              + " is normally unsupported but, since writing out an \"extracted\" XML file is not"
-              + " requested, it is just a warning.", file=sys.stderr)
+    attrib_orig = inclusion[1].text   # [1] is the 'originalSrc' child
+    attrib_split = attrib_orig.split(':', 1) # don't need to scrutinize, like before, since it came from xiax-block
 
-    attrib_orig = el.attrib['originalSrc']
 
-    attrib_split = attrib_orig.split(':', 1)
-    if len(attrib_split)==2 and len(attrib_split[0])>1 and attrib_split[0]!='file':  # len(attrib_split[0])>1 lets Windows drives pass
-      if debug > 1:
-        print("Debug: Skipping the artwork/sourcecode element on line " + str(el.sourceline) + " having 'originalSrc' value \""
-               + attrib_orig + "\" because it specifies a URI scheme other than \"file\".")
-      continue
-
-    # Note: splitdrive is only active on Windows-based platforms, e.g., splitdrive("c:foo")[0] == 'c'
-    if (len(attrib_split)==1 and (os.path.normpath(attrib_split[0])).startswith(('..','/','\\'))) or \
-       (len(attrib_split)==2 and (os.path.splitdrive(attrib_orig)[0]!='' or os.path.normpath(attrib_split[1]).startswith(('..','/','\\')))):
-      print("Error: a non-local filepath is used for the artwork/sourcecode element on line " + str(el.sourceline)
-            + " having 'originalSrc' value \"" + attrib_orig + "\".", file=sys.stderr)
-      return 1
-
+    # normalize the relative path (i.e., remove any "file:" prefix)
     if len(attrib_split)==1:
-      attrib_full = os.path.join(dst_dir, attrib_split[0])
-    else:  # len(attrib_split)==2:
-      attrib_full = os.path.join(dst_dir, attrib_split[1])
+      attrib_rel_path = attrib_split[0]
+    else:
+      attrib_rel_path = attrib_split[1]
 
+    # calc full dst path for this inclusion
+    attrib_full = os.path.join(dst_dir, attrib_rel_path)
 
+    # ensure it doesn't exist yet, without force
     if os.path.isfile(attrib_full) and force is False:
       print("Error: file already exists for the artwork/sourcecode element on line " + str(el.sourceline)
             + " having 'originalSrc' value \"" + attrib_orig + "\"  (use \"force\" flag to override).",
@@ -110,23 +118,17 @@ def extract(debug, force, src_path, dst_path):
     # okay, ready to do the extraction
 
     attrib_full_dir = os.path.dirname(attrib_full)
-    #attrib_full_file = os.path.basename(attrib_ful)
-
     if not os.path.exists(attrib_full_dir):
       try:
         #os.makedirs(dst_dir, exist_ok=True)    # exist_ok doesn't exist < 3.4 !!!
         os.makedirs(attrib_full_dir)
-      except OSError as e:
-        if e.errno != errno.EEXIST:  # for python < 3.4
-          template = "Error: an exception occurred while trying to makedir \"" + dst_dir + "\" of type {0} occurred: {1!r}"
-          message = template.format(type(e).__name__, e.args)
+      except Exception as e:
+        e_type, e_val, e_tb = sys.exc_info()
+        if not (e_type == OSError and e.errno == errno.EEXIST):  # for 2.7
+          template = "Error: os.makedirs('{}') failed on {}:{} [{!r}]"
+          message = template.format(attrib_full_dir, os.path.basename(e_tb.tb_frame.f_code.co_filename), e_tb.tb_lineno, e_val)
           print(message, file=sys.stderr)
           return 1
-      except Exception as e:
-        template = "Error: an exception occurred while trying to makedir \"" + attrib_full_dir + "\" of type {0} occurred: {1!r}"
-        message = template.format(type(e).__name__, e.args)
-        print(message, file=sys.stderr)
-        return 1
 
     markers=False
     if el.text.startswith('<CODE BEGINS> file') and el.text.endswith('<CODE ENDS>'):
@@ -135,14 +137,8 @@ def extract(debug, force, src_path, dst_path):
 
     # copy contents of element's "text" to specified file
 
-    # this code doesn't work on 2.7...
-    #try:
-    #  attrib_full_fd = open(attrib_full, 'w' if force else 'x')
-    #except Exception as e:
-    #  template = "Error: an exception occurred while trying to open \"" + attrib_full + "\" for writing of type {0} occurred: {1!r}"
-    #  message = template.format(type(e).__name__, e.args)
-    #  print(message, file=sys.stderr)
-    #  return 1
+    # this following line doesn't work on 2.7:
+    #   ^-- attrib_full_fd = open(attrib_full, 'w' if force else 'x')
     if os.path.isfile(attrib_full) and force == False:
       print("Error, file \"" + attrib_full + "\" already exists (use \"force\" flag to override).", file=sys.stderr)
       return 1
@@ -169,22 +165,14 @@ def extract(debug, force, src_path, dst_path):
   # Now save the "unpacked" XML file, only if requested
 
   if dst_file:
-    # this code doesn't work on 2.7...
-    #try:
-    #  dst_path_fd = open(dst_path, 'w' if force else 'x')
-    #except Exception as e:
-    #  template = "Error: an exception occurred while trying to open \"" + dst_path + "\" for writing of type {0} occurred: {1!r}"
-    #  message = template.format(type(e).__name__, e.args)
-    #  print(message, file=sys.stderr)
-    #  return 1
+    # this code doesn't work on 2.7:
+    #   ^-- dst_path_fd = open(dst_path, 'w' if force else 'x')
     if os.path.isfile(dst_path) and force == False:
       print("Error, file \"" + dst_path + "\" already exists (use \"force\" flag to override).", file=sys.stderr)
       return 1
     if "2.7" in sys.version:
       dst_path_fd = open(dst_path, 'wb')
       dst_str=etree.tostring(src_doc, pretty_print=True, encoding='unicode')
-      #p = unicode(dst_str, 'utf-8')
-      #p = u''.join(dst_str.encoding('utf-8'))
       p = dst_str.encode(encoding='utf-8')
       dst_path_fd.write(p)
     else:
@@ -210,8 +198,11 @@ def insert(debug, force, src_path, dst_path):
   src_dir = os.path.dirname(src_path)
   src_file = os.path.basename(src_path)
   dst_dir = os.path.dirname(dst_path) if dst_path.endswith(".xml") else dst_path
-  YYYY_MM_DD = date.today().strftime("%Y-%m-%d")
   src_doc = etree.parse(src_path) # this won't fail because it suceeded a moment ago in process()
+  if "pytest" in sys.modules:
+    YYYY_MM_DD = "1234-56-78"
+  else:
+    YYYY_MM_DD = date.today().strftime("%Y-%m-%d")
 
 
   ### 1. prime inclusions, if needed
@@ -364,6 +355,7 @@ def insert(debug, force, src_path, dst_path):
 
   # pack the inclusions
   # note: much of this is a condensed form of the above code (no repeats)
+  xiax_block = etree.Element("xiax-block", xmlns="https://watsen.net/xiax")
   for el in src_doc.iter('artwork', 'sourcecode'):
     if 'src' not in el.attrib:
       # don't print out another "skipping" debug message
@@ -405,21 +397,29 @@ def insert(debug, force, src_path, dst_path):
             + " having 'src' value \"" + src_attrib_uri_orig + "\".", file=sys.stderr)
       return 1
 
-    # okay, ready to make the change
+    # add an "inclusion" entry to the xiax-block
+    inclusion = etree.Element("inclusion")
+    xiax_block.append(inclusion)
+    path = etree.Element("path")
+    path.text = src_doc.getelementpath(el)
+    inclusion.append(path)
+    originalSrc = etree.Element("originalSrc")
+    originalSrc.text = src_attrib_uri_orig
+    inclusion.append(originalSrc)
 
-    # swap attributes
+    # remove the 'src' attribute
     el.attrib.pop('src')
-    el.set('originalSrc', src_attrib_uri_orig)
 
-    # copy file contents into this element's "text"
+    # embed file contents into this element's "text"
     try:
       if "2.7" in sys.version:
         src_attrib_fd = open(src_attrib_full_path, "rb")
       else:
         src_attrib_fd = open(src_attrib_full_path, "r")
     except Exception as e:
-      template = "Error: an exception occurred while trying to open \"" + src_attrib_full + "\" for reading of type {0} occurred: {1!r}"
-      message = template.format(type(e).__name__, e.args)
+      e_type, e_val, e_tb = sys.exc_info()
+      template = "Error: open('{}') failed on {}:{} [{!r}]"
+      message = template.format(src_attrib_full_path, os.path.basename(e_tb.tb_frame.f_code.co_filename), e_tb.tb_lineno, e_val)
       print(message, file=sys.stderr)
       return 1
 
@@ -436,31 +436,54 @@ def insert(debug, force, src_path, dst_path):
 
     # done processing art/code elements
 
+
+  # don't writeout the xiax-block if empty
+  if len(xiax_block) == 0:
+    print("Warn: no xiax processing instructions were found (no-op)")
+  else:
+
+    # create xiax-block data
+    xiax_block = etree.tostring(xiax_block, pretty_print=True, encoding='unicode').encode(encoding='utf-8')
+    if "2.7" in sys.version:
+      out_file = StringIO()
+      gzip_file = gzip.GzipFile(fileobj=out_file, mode='w')
+      gzip_file.write(xiax_block.encode('utf-8'))
+      gzip_file.close()
+      xiax_block_gz = out_file.getvalue()
+      xiax_block_gz_b64 = str(base64.encodestring(xiax_block_gz))
+    else:
+      xiax_block_gz = gzip.compress(xiax_block)              # str(data, 'utf-8')
+      xiax_block_gz_b64 = str(base64.encodestring(xiax_block_gz), 'utf-8')  # .encode('utf-8')) 
+  
+    # add the xiax-block to DOM
+    comment = etree.Comment(block_header + "\n%s\n" % xiax_block_gz_b64)
+    comment.tail = "\n\n"
+    src_doc.getroot().append(comment)
+    if not comment.getprevious().tail:
+      comment.getprevious().tail = "\n\n"
+    else:
+      comment.getprevious().tail.join("\n")
+
+
+
   # ensure dst_dir exists
   if not os.path.exists(dst_dir):
     try:
       #os.makedirs(dst_dir, exist_ok=True)    # exist_ok doesn't exist < 3.4 !!!
       os.makedirs(dst_dir)
-    except OSError as e:
-      if e.errno != errno.EEXIST:  # for python < 3.4
-        template = "Error: an exception occurred while trying to makedir \"" + dst_dir + "\" of type {0} occurred: {1!r}"
-        message = template.format(type(e).__name__, e.args)
+    except Exception as e:
+      e_type, e_val, e_tb = sys.exc_info()
+      if not (e_type == OSError and e.errno == errno.EEXIST): # for 2.7
+        template = "Error: os.makedirs('{}') failed on {}:{} [{!r}]"
+        message = template.format(dst_dir, os.path.basename(e_tb.tb_frame.f_code.co_filename), e_tb.tb_lineno, e_val)
         print(message, file=sys.stderr)
         return 1
-    except Exception as e:
-      template = "Error: an exception occurred while trying to makedir \"" + dst_dir + "\" of type {0} occurred: {1!r}"
-      message = template.format(type(e).__name__, e.args)
-      print(message, file=sys.stderr)
-      return 1
 
   # now save the "packed" xml file
   
   # open dst file, ony if doesn't exist, unless forced
-  #
-  # this code doesn't work on 2.7...
-  #  try:
-  #    dst_fd = open(dst_path, 'w' if force else 'x')
-  #
+  # note: the following line doesn't work on 2.7...
+  #       dst_fd = open(dst_path, 'w' if force else 'x')
   if os.path.isfile(dst_path) and force is False:
     print("Error, file \"" + dst_path + "\" already exists (use \"force\" flag to override).", file=sys.stderr)
     return 1
@@ -502,26 +525,40 @@ def process(debug, force, src, dst):
     TBD
   """
 
+  # add CWD to path if not passed
+  if os.path.dirname(src) == "":
+    src = os.path.join("./", src)
+  if os.path.dirname(dst) == "":
+    dst = os.path.join("./", dst)
+
+  # sanity tests before parse(src)
+  if not src.endswith(".xml"):
+    print("Error: \"src\" file \"" + src + "\" does not end with \".xml\".", file=sys.stderr)
+    return 1
   if not os.path.isfile(src):
     print("Error: \"src\" file \"" + src + "\" does not exist.", file=sys.stderr)
     return 1
 
+  # parse(src)
   try:
     doc = etree.parse(src)
   except Exception as e:
-    template = "Error: XML parsing error.  An exception of type {0} occurred: {1!r}"
-    message = template.format(type(e).__name__, e.args)
+    e_type, e_val, e_tb = sys.exc_info()
+    template = "Error: etree.parse('{}') failed on {}:{} [{!r}]"
+    message = template.format(src, os.path.basename(e_tb.tb_frame.f_code.co_filename), e_tb.tb_lineno, e_val)
     print(message, file=sys.stderr)
     return 1
 
+  # insert/extract? - see if any ##xiax-block exists
   do_insert=True
-  for el in doc.iter('artwork', 'sourcecode'):
-    if 'originalSrc' in el.attrib:
+  for el in doc.getroot().iterchildren(etree.Comment):
+  #for el in doc.xpath('/rfc/comment()'):
+    if block_header in el.text:
       do_insert=False
       if debug > 2:
-        print("Spew: switching to 'extract' mode because artwork/sourcecode element on line "
-               + str(el.sourceline) + " has an \"originalSrc\" attribute.")
-
+        print("Spew: switching to 'extract' mode because there is a comment ending on line "
+               + str(el.sourceline) + " that contains the string \"%s\"." % block_header)
+ 
   # release memory (in case it was a large XML file)
   doc = None
 

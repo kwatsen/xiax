@@ -43,31 +43,31 @@
         when, and only when, they appear in all capitals, as shown here.</t>
 
         <figure>
-          <preamble>src="hello.txt"</preamble>
+          <preamble>xiax:src="hello.txt"</preamble>
           <artwork><![CDATA[Hello (from hello.txt)
 ]]></artwork>
         </figure>
 
         <figure>
-          <preamble>src="file:hello.txt"</preamble>
+          <preamble>xiax:src="file:hello.txt"</preamble>
           <artwork><![CDATA[Hello (from hello.txt)
 ]]></artwork>
         </figure>
 
         <figure>
-          <preamble>src="fakedir/../hello.txt"</preamble>
+          <preamble>xiax:src="fakedir/../hello.txt"</preamble>
           <artwork><![CDATA[Hello (from hello.txt)
 ]]></artwork>
         </figure>
 
         <figure>
-          <preamble>src="file:fakedir/../hello.txt"</preamble>
+          <preamble>xiax:src="file:fakedir/../hello.txt"</preamble>
           <artwork><![CDATA[Hello (from hello.txt)
 ]]></artwork>
         </figure>
 
         <figure>
-          <preamble>src="hello.xml"</preamble>
+          <preamble>xiax:src="hello.xml"</preamble>
           <artwork><![CDATA[<widgets>
   <widget>
     <name>foo</name>
@@ -77,13 +77,13 @@
         </figure>
 
         <figure>
-          <preamble>src="file:hello:443.txt"</preamble>
+          <preamble>xiax:src="file:hello:443.txt"</preamble>
           <artwork><![CDATA[Hello (from hello.txt)
 ]]></artwork>
         </figure>
 
         <figure>
-          <preamble>src="hello@1234-56-78.yang"</preamble>
+          <preamble>xiax:src="hello@1234-56-78.yang"</preamble>
           <artwork><![CDATA[module ex-widgets {
   yang-version 1.1;
 
@@ -131,7 +131,7 @@
         <?rfc include="reference.RFC.8174.xml"?>
       </references>
    </back>
-<!-- ##xiax-block:
+<!-- ##xiax-block-v1:
 H4sIAMcXEUkC/7WTTQ6CMBCF95yCuKcTBcSQSryDS+OiQoEJtTXtGPD2gi7UjWICy/nL915mhnco
 uuCkTN743Vlpt13URBeXArSCnNRMS4KhaZF5vs9R5+rq0Ogh6uOLoDo7Y1EoCU7m1FegxOpq5WF5
 BGGpNbbh8Gh7ThiLFWqh9jbPaqmUYdQRh/f0AIIP0j/c1W9uiUqms8DDEXDRyAItMAazSIhG+p9b

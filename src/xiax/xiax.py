@@ -18,7 +18,8 @@ if "2.7" in sys.version:
 """xiax: eXtract or Insert artwork And sourcecode to/from Xml"""
 
 
-block_header = " ##xiax-block:"
+xiax_namespace = '{https://watsen.net/xiax}'
+xiax_block_header = " ##xiax-block-v1:"
 
 
 # Force stable gzip timestamps
@@ -70,8 +71,8 @@ def extract(debug, force, src_path, dst_path):
   # extract the xiax-block
   for el in src_doc.getroot().iterchildren(etree.Comment):
   #for el in doc.xpath('/rfc/comment()'):
-    if block_header in el.text:
-      text=el.text.replace(block_header + "\n", "")
+    if xiax_block_header in el.text:
+      text=el.text.replace(xiax_block_header + "\n", "")
       decoded_str = base64.decodestring(text.encode('utf-8'))
       if "2.7" in sys.version:
         in_file = StringIO()
@@ -212,13 +213,40 @@ def insert(debug, force, src_path, dst_path):
   # c) generate derived views (FIXME: not implemented yet)
 
   for el in src_doc.iter('artwork', 'sourcecode'):
-    if 'src' not in el.attrib:
+
+    # check if any 'xiax:' attributes exist
+    if xiax_namespace not in '\t'.join(el.attrib):
       if debug > 1:
         print("Debug: Skipping the artwork/sourcecode element on line " + str(el.sourceline) 
-               + " because it doesn't have a 'src' attribute.")
+               + " because it doesn't have any 'xiax:' prefixed attributes.")
+        print('\t'.join(el.attrib))
       continue
 
-    src_attrib_uri_orig = el.attrib['src']
+    #rewritten (below) for better user messages
+    #if bool(xiax_namespace+'src' in el.attrib) != (xiax_namespace+'gen' in el.attrib):
+    #  print("Error: the artwork/sourcecode element on line " + str(el.sourceline) 
+    #         + " must specify 'xiax:src' or 'xiax:gen' (not both).")
+    #  return 1
+
+    if xiax_namespace+'src' not in el.attrib and xiax_namespace+'gen' not in el.attrib:
+      print("Error: the artwork/sourcecode element on line " + str(el.sourceline) 
+             + " must specify 'xiax:src' or 'xiax:gen'.", file=sys.stderr)
+      return 1
+
+    if xiax_namespace+'src' in el.attrib and xiax_namespace+'gen' in el.attrib:
+      print("Error: the artwork/sourcecode element on line " + str(el.sourceline) 
+             + " cannot specify both 'xiax:src' and 'xiax:gen'.", file=sys.stderr)
+      return 1
+
+
+    # normalize the tag name used
+    if xiax_namespace+'src' in el.attrib:
+      xiax_tag = 'xiax:src'
+    else:
+      xiax_tag = 'xiax:gen'
+
+
+    src_attrib_uri_orig = el.attrib[xiax_namespace+'src']
 
     # notes:
     #  - wanted to use "urlparse", but is fails when '@' character is present
@@ -227,13 +255,13 @@ def insert(debug, force, src_path, dst_path):
     if len(src_attrib_uri_split)==2 and src_attrib_uri_split[0]!='file':
       if len(src_attrib_uri_split[0]) == 1:
         print("Error: a Windows-based drive path detected for the artwork/sourcecode element on line "
-               + str(el.sourceline) + " having 'src' value \"" + src_attrib_uri_orig + "\".",
+               + str(el.sourceline) + " having 'xiax:src' value \"" + src_attrib_uri_orig + "\".",
                file=sys.stderr)
         return 1
 
       if debug > 1:
         print("Debug: Skipping the artwork/sourcecode element on line " + str(el.sourceline)
-               + " having 'src' value \"" + src_attrib_uri_orig + "\" because it specifies a URI scheme"
+               + " having 'xiax:src' value \"" + src_attrib_uri_orig + "\" because it specifies a URI scheme"
                + " other than \"file\".")
       continue
 
@@ -246,7 +274,7 @@ def insert(debug, force, src_path, dst_path):
     # ensure the path is a local path
     if os.path.normpath(src_attrib_rel_path).startswith(('..','/')):
       print("Error: a non-local filepath is used for the artwork/sourcecode element on line "
-             + str(el.sourceline) + " having 'src' value \"" + src_attrib_uri_orig + "\".", file=sys.stderr)
+             + str(el.sourceline) + " having 'xiax:src' value \"" + src_attrib_uri_orig + "\".", file=sys.stderr)
       return 1
 
     # at this point, src_attrib_rel_path is considered okay (sans possible YYYY-MM-DD replacement)
@@ -263,7 +291,7 @@ def insert(debug, force, src_path, dst_path):
       # ensure src file actually exists
       if not os.path.isfile(src_attrib_full_path):
         print("Error: file does not exist for the artwork/sourcecode element on line " + str(el.sourceline)
-               + " having 'src' value \"" + src_attrib_uri_orig + "\". (full path: src_attrib_full_path)",
+               + " having 'xiax:src' value \"" + src_attrib_uri_orig + "\". (full path: src_attrib_full_path)",
                file=sys.stderr)
         return 1
 
@@ -286,7 +314,7 @@ def insert(debug, force, src_path, dst_path):
           outfile.write(line)
 
       # minor layering violation, so "pack" logic below can be "YYYY-MM-DD" free
-      el.attrib['src'] = src_attrib_uri_orig.replace("YYYY-MM-DD", YYYY_MM_DD)
+      el.attrib[xiax_namespace+'src'] = src_attrib_uri_orig.replace("YYYY-MM-DD", YYYY_MM_DD)
 
 
 
@@ -357,11 +385,52 @@ def insert(debug, force, src_path, dst_path):
   # note: much of this is a condensed form of the above code (no repeats)
   xiax_block = etree.Element("xiax-block", xmlns="https://watsen.net/xiax")
   for el in src_doc.iter('artwork', 'sourcecode'):
-    if 'src' not in el.attrib:
+
+    # check if any xiax-namespaced attributes exist
+    if xiax_namespace not in '\t'.join(el.attrib):
       # don't print out another "skipping" debug message
       continue
 
-    src_attrib_uri_orig = el.attrib['src']     # already has YYYY-MM-DD substitution from "prime" step
+    # don't assert again xiax:src xor xiax:gen (would've errored-out above)
+
+    # normalize the tag name used
+    if xiax_namespace+'src' in el.attrib:
+      xiax_tag = 'xiax:src'
+    else:
+      xiax_tag = 'xiax:gen'
+
+    # ensure 'src' attribute not also set
+    if 'src' in el.attrib:
+      print("Error: the \"src\" attribute is set for xiax-controlled artwork/sourcecode element on line "
+            + str(el.sourceline) + " having '" + xiax_tag + "' value \"" + el.attrib[xiax_tag] + "\".",
+           file=sys.stderr)
+      return 1
+
+    # ensure 'originalSrc' attribute not also set
+    if 'originalSrc' in el.attrib:
+      print("Error: the \"originalSrc\" attribute is set for xiax-controlled artwork/sourcecode element on line "
+            + str(el.sourceline) + " having '" + xiax_tag + "' value \"" + el.attrib[xiax_tag] + "\".",
+           file=sys.stderr)
+      return 1
+
+    # ensure 'markers' attribute not also set
+    if 'markers' in el.attrib:
+      print("Error: the \"markers\" attribute is set for xiax-controlled artwork/sourcecode element on line "
+            + str(el.sourceline) + " having '" + xiax_tag + "' value \"" + el.attrib[xiax_tag] + "\".",
+            + "\" (use \"xiax:markers='true'\" instead).", file=sys.stderr)
+      return 1
+
+    # ensure empty content
+    if el.text != None:
+      print("Error: content already exists for the artwork/sourcecode element on line " 
+            + str(el.sourceline) + " having '" + xiax_tag + "' value \"" + el.attrib[xiax_tag] + "\".",
+           file=sys.stderr)
+      return 1
+
+
+
+
+    src_attrib_uri_orig = el.attrib[xiax_namespace+'src']     # already has YYYY-MM-DD substitution from "prime" step
     src_attrib_uri_split = src_attrib_uri_orig.split(':', 1)
     if len(src_attrib_uri_split)==2 and src_attrib_uri_split[0]!='file':
       # don't test for error condition again (it returned before)
@@ -382,20 +451,9 @@ def insert(debug, force, src_path, dst_path):
     # ensure src file actually exists
     if not os.path.isfile(src_attrib_full_path):
       print("Error: file does not exist for the artwork/sourcecode element on line " + str(el.sourceline)
-             + " having 'src' value \"" + src_attrib_uri_orig + "\". (full path: src_attrib_full_path)", file=sys.stderr)
+             + " having 'xiax:src' value \"" + src_attrib_uri_orig + "\". (full path: src_attrib_full_path)", file=sys.stderr)
       return 1
 
-    # ensure originalSrc not set
-    if 'originalSrc' in el.attrib:
-      print("Error: the \"originalSrc\" attribute is already set for the artwork/sourcecode element on line "
-            + str(el.sourceline) + " having 'src' value \"" + src_attrib_uri_orig + "\".", file=sys.stderr)
-      return 1
-
-    # ensure empty content
-    if el.text != None:
-      print("Error: content already exists for the artwork/sourcecode element on line " + str(el.sourceline)
-            + " having 'src' value \"" + src_attrib_uri_orig + "\".", file=sys.stderr)
-      return 1
 
     # add an "inclusion" entry to the xiax-block
     inclusion = etree.Element("inclusion")
@@ -408,7 +466,7 @@ def insert(debug, force, src_path, dst_path):
     inclusion.append(originalSrc)
 
     # remove the 'src' attribute
-    el.attrib.pop('src')
+    el.attrib.pop(xiax_namespace+'src')
 
     # embed file contents into this element's "text"
     try:
@@ -424,9 +482,9 @@ def insert(debug, force, src_path, dst_path):
       return 1
 
     data = src_attrib_fd.read()
-    if 'markers' in el.attrib and el.attrib['markers'] == "true":
+    if xiax_namespace+'markers' in el.attrib and el.attrib[xiax_namespace+'markers'] == "true":
       data = '<CODE BEGINS> file "%s"\n\n%s\n<CODE ENDS>' % (os.path.basename(src_attrib_full_path), data)
-      el.attrib.pop('markers')
+      el.attrib.pop(xiax_namespace+'markers')
     if "2.7" in sys.version:
       p = data.decode(encoding='utf-8')
       el.text = etree.CDATA(p)
@@ -436,6 +494,8 @@ def insert(debug, force, src_path, dst_path):
 
     # done processing art/code elements
 
+  # remove the "xmlns:xiax" attribute (xmlns:xiax="https://watsen.net/xiax")
+  etree.cleanup_namespaces(src_doc.getroot())
 
   # don't writeout the xiax-block if empty
   if len(xiax_block) == 0:
@@ -456,7 +516,7 @@ def insert(debug, force, src_path, dst_path):
       xiax_block_gz_b64 = str(base64.encodestring(xiax_block_gz), 'utf-8')  # .encode('utf-8')) 
   
     # add the xiax-block to DOM
-    comment = etree.Comment(block_header + "\n%s\n" % xiax_block_gz_b64)
+    comment = etree.Comment(xiax_block_header + "\n%s\n" % xiax_block_gz_b64)
     comment.tail = "\n\n"
     src_doc.getroot().append(comment)
     if not comment.getprevious().tail:
@@ -553,11 +613,11 @@ def process(debug, force, src, dst):
   do_insert=True
   for el in doc.getroot().iterchildren(etree.Comment):
   #for el in doc.xpath('/rfc/comment()'):
-    if block_header in el.text:
+    if xiax_block_header in el.text:
       do_insert=False
       if debug > 2:
         print("Spew: switching to 'extract' mode because there is a comment ending on line "
-               + str(el.sourceline) + " that contains the string \"%s\"." % block_header)
+               + str(el.sourceline) + " that contains the string \"%s\"." % xiax_block_header)
  
   # release memory (in case it was a large XML file)
   doc = None

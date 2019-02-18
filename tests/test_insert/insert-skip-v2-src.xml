@@ -12,7 +12,7 @@
 <?rfc-ext allow-markup-in-artwork="yes" ?>
 <?rfc-ext include-index="no" ?>
 <!--<?rfc strict="no"?> -->
-<rfc category="std" ipr="trust200902" docName="draft-ietf-widgets-foobar-00">
+<rfc xmlns:xiax="https:watsen.net/xiax" category="std" ipr="trust200902" docName="draft-ietf-widgets-foobar-00">
     <front>
         <title>Some Title</title>
         <author initials="J.N." surname="Nobody" fullname="Joe Nobody">
@@ -48,13 +48,13 @@
         </figure>
 
         <figure>
-          <preamble>external scheme: src="https://www.ietf.org/static/img/ietf-logo.e4b6ca0dd271.gif"</preamble>
-          <artwork src="https://www.ietf.org/static/img/ietf-logo.e4b6ca0dd271.gif">IETF</artwork>
+          <preamble>external scheme: xiax:src="https://www.ietf.org/static/img/ietf-logo.e4b6ca0dd271.gif"</preamble>
+          <artwork xiax:src="https://www.ietf.org/static/img/ietf-logo.e4b6ca0dd271.gif">IETF</artwork>
         </figure>
 
         <figure>
-          <preamble>unknown scheme: src="hello:443.txt"</preamble>
-          <artwork src="hello:443.txt"/>
+          <preamble>unknown scheme: xiax:src="hello:443.txt"</preamble>
+          <artwork xiax:src="hello:443.txt"/>
         </figure>
 
       </section>

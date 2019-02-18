@@ -17,7 +17,8 @@
 
 <rfc category="std"
      ipr="trust200902"
-     docName="draft-ietf-widgets-foobar-00" >
+     docName="draft-ietf-widgets-foobar-00"
+     xmlns:xiax='https://watsen.net/xiax'>
     <front>
         <title>Some Title</title>
         <author initials="J.N." surname="Nobody" fullname="Joe Nobody">
@@ -48,38 +49,38 @@
         when, and only when, they appear in all capitals, as shown here.</t>
 
         <figure>
-          <preamble>src="hello.txt"</preamble>
-          <artwork src="hello.txt"/>
+          <preamble>xiax:src="hello.txt"</preamble>
+          <artwork xiax:src="hello.txt"/>
         </figure>
 
         <figure>
-          <preamble>src="file:hello.txt"</preamble>
-          <artwork src="file:hello.txt"/>
+          <preamble>xiax:src="file:hello.txt"</preamble>
+          <artwork xiax:src="file:hello.txt"/>
         </figure>
 
         <figure>
-          <preamble>src="fakedir/../hello.txt"</preamble>
-          <artwork src="fakedir/../hello.txt"/>
+          <preamble>xiax:src="fakedir/../hello.txt"</preamble>
+          <artwork xiax:src="fakedir/../hello.txt"/>
         </figure>
 
         <figure>
-          <preamble>src="file:fakedir/../hello.txt"</preamble>
-          <artwork src="file:fakedir/../hello.txt"/>
+          <preamble>xiax:src="file:fakedir/../hello.txt"</preamble>
+          <artwork xiax:src="file:fakedir/../hello.txt"/>
         </figure>
 
         <figure>
-          <preamble>src="hello.xml"</preamble>
-          <artwork src="hello.xml"/>
+          <preamble>xiax:src="hello.xml"</preamble>
+          <artwork xiax:src="hello.xml"/>
         </figure>
 
         <figure>
-          <preamble>src="file:hello:443.txt"</preamble>
-          <artwork src="file:hello:443.txt"/>
+          <preamble>xiax:src="file:hello:443.txt"</preamble>
+          <artwork xiax:src="file:hello:443.txt"/>
         </figure>
 
         <figure>
-          <preamble>src="hello@YYYY-MM-DD.yang"</preamble>
-          <artwork src="hello@YYYY-MM-DD.yang"/>
+          <preamble>xiax:src="hello@YYYY-MM-DD.yang"</preamble>
+          <artwork xiax:src="hello@YYYY-MM-DD.yang"/>
         </figure>
 
       </section>

@@ -48,8 +48,8 @@
         when, and only when, they appear in all capitals, as shown here.</t>
 
         <figure>
-          <preamble>content already w/ src="hello.txt"</preamble>
-          <artwork src="hello.txt">world</artwork>
+          <preamble>content already w/ xiax:src="hello.txt"</preamble>
+          <artwork xiax:src="hello.txt">world</artwork>
         </figure>
 
       </section>

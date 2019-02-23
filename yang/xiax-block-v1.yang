@@ -1,4 +1,4 @@
-module xiax-block {
+module xiax-block-v1 {
   yang-version 1.1;
   namespace "https://watsen.net/xiax";
   prefix "xb";

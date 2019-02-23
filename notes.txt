@@ -133,8 +133,8 @@
 
 == install pytest (tox didn't need it?)
 
-  # pip install -U pytest
-  # pytest (failed, can't find module...)
+  # pip install --user pytest  (this works)
+  # pip install -U pytest  (not sure if this is needed at all, also doesn't seem to work...)
 
   Hmmm, maybe "install" it?
 
@@ -177,6 +177,76 @@ TOX   (still NOT WORKING)
 - https://docs.pytest.org/en/latest/goodpractices.html
 - https://blog.ionelmc.ro/2014/05/25/python-packaging
     ^-- claims that `python setup.py test` is a FAILED EXPERIMENT
+
+
+
+
+
+Matplotlib screwed my env up:
+  - don't know when I used these commands (stashing them here for now)
+      # rm /Users/kent/.pyenv/versions/py37
+      # rm -rf /Users/kent/.pyenv/versions/3.7.2/envs/py37/
+
+  - I'd previously used (what worked before, albeit it wiped out `tox -e py37`
+      # env PYTHON_CONFIGURE_OPTS="--enable-framework CC=clang" pyenv install 3.7.2
+  - Reinstalling fixes xiax tox -e py37
+      # pyenv install 3.7.2
+      # tox -e py37  (PASSES!)
+  - But, of course, now yang-next/analyze-issues.py is broken again...
+  - Trying to install "framework" in a different venv...
+     # env PYTHON_CONFIGURE_OPTS="--enable-framework CC=clang" pyenv virtualenv 3.7.2 py37-framework
+  - okay, it shows up in `pyenv versions`, but framework error still shows...
+  - try to set "local" venv:
+     # pyenv local py37-framework
+  - command accepted, now complaining about missing packages...
+     (inside *that* window!)
+     # pip install --user numpy 
+       - didn't work, maybe w/o the "--user"?
+     # pip install numpy 
+       - yes, this worked!
+     # pip install PyGithub
+     # pip install matplotlib
+  - darnit, back to the framework error again!
+  - this didn't work either:
+     # /Users/kent/.pyenv/versions/py37-framework/bin/python analyze-issues.py 
+  - reset, removing "local: venv
+     # rm -rf .python-version 
+  - these still fail:
+     # python ./analyze-issues.py
+     # /Users/kent/.pyenv/versions/py37-framework/bin/python analyze-issues.py 
+  - try venv?
+     # python3.7 -m venv ./myenv
+     # source ./myenv/bin/activate
+     # pip install numpy
+     # pip install PyGithub
+     # pip install matplotlib
+     # python ./analyze-issues.py
+  - darnit, back to the framework error again!
+     # deactivate
+     # rm -rf ./myenv
+     # env PYTHON_CONFIGURE_OPTS="--enable-framework CC=clang" python3.7 -m venv ./myenv
+     # source ./myenv/bin/activate
+     # pip install numpy PyGithub matplotlib
+     # python ./analyze-issues.py
+  - darnit, back to the framework error again!
+  - how about relaying on MacOS native?
+     # deactivate
+     # PATH=/usr/local/opt/openssl/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin
+     # sudo easy_install pip
+     # pip install --user numpy PyGithub matplotlib
+  - DANGER: many people suggest this:
+     # sudo pip install -U matplotlib   (I haven't tried this yet)
+  - Another idea, how about installing *3.7.1* as framework (diff ver shouldn't conflict, right?)
+     # env PYTHON_CONFIGURE_OPTS="--enable-framework CC=clang" pyenv install 3.7.1
+     # pyenv local 3.7.1
+     # python ./analyze-issues.py
+        ^-- it works!!!  (and `tox` too)
+        ^-- and I didn't even have to: pip install numpy PyGithub matplotlib  (weird)
+
+
+
+
+
 
 
 

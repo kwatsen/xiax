@@ -4,6 +4,7 @@
 import io
 import os
 import sys
+from glob import glob
 from shutil import rmtree
 from setuptools import setup, find_packages, Command
 
@@ -89,10 +90,11 @@ setup(
     author=AUTHOR,
     author_email=EMAIL,
     python_requires=REQUIRES_PYTHON,
-    #packages=find_packages("src"),
-    #package_dir = {"": "src"},
-    packages=['xiax'],
-    package_dir={'xiax': 'src/xiax'},
+    packages=find_packages("src"),
+    package_dir = {"": "src"},
+    py_modules=[splitext(basename(path))[0] for path in glob('src/*.py')],
+    #packages=['src/xiax'],
+    #package_dir={'xiax': 'src/xiax'},
     package_data={'xiax': ['data/*.rng']},
     include_package_data = True,
     keywords = ["ietf", "rfc", "artwork", "sourcecode", "extraction", "insertion", "folding", "unfolding"],

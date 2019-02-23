@@ -1,7 +1,0 @@
-module: xiax-block
-
-  yang-data xiax-block:
-    +-- xiax-block
-       +-- inclusion* [path]
-          +-- path           string
-          +-- originalSrc?   inet:uri

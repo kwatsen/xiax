@@ -1,0 +1,14 @@
+module: xiax-block
+
+  yang-data xiax-block:
+    +-- xiax-block
+       +-- inclusion* [path]
+          +-- path    string
+          +-- src
+          |  +-- attrib?   inet:uri
+          +-- gen
+          |  +-- attrib?   inet:uri
+          |  +-- file?     <anydata>
+          +-- val
+             +-- attrib?   inet:uri
+             +-- file?     <anydata>

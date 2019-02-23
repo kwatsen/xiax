@@ -27,6 +27,9 @@ v2 [RFC 7749] and v3 [RFC 7991] documents.
 
     `pip install xiax`
 
+  * Developed on 3.7
+  * Tested on 3.6, 3.5, 3.4, and 2.7.
+
 ## Usage
 
 ```

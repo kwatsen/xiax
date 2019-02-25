@@ -1,8 +1,45 @@
+<?xml version="1.0"?>
 <xiax-block xmlns="https://watsen.net/xiax">
   <inclusion>
-    <path>back/section[3]/figure[1]/artwork</path>
+    <path>back/section[1]/section[1]/t[3]/figure/artwork</path>
     <src>
       <attrib>hello.txt</attrib>
+    </src>
+  </inclusion>
+  <inclusion>
+    <path>back/section[1]/section[3]/t[3]/figure/artwork</path>
+    <gen>
+      <attrib>xiax/gen-foo-tree-diagram@2019-02-25.xml</attrib>
+      <file>
+        <generate xmlns="https://watsen.net/xiax" version="1">
+          <yang-tree-diagram>
+            <source>foo@2019-02-25.yang</source>
+          </yang-tree-diagram>
+        </generate>
+      </file>
+    </gen>
+  </inclusion>
+  <inclusion>
+    <path>back/section[1]/section[5]/t[4]/figure/artwork</path>
+    <src>
+      <attrib>examples/ex-foo.xml</attrib>
+      <val>
+        <attrib>xiax/val-xml-ex-foo@2019-02-25.xml</attrib>
+        <file>
+          <validate xmlns="https://watsen.net/xiax">
+            <xml-document>
+              <using-yang>
+                <yang-modules>
+                  <yang-module>
+                    <name>foo@2019-02-25.yang</name>
+                    <uri>foo@2019-02-25.yang</uri>
+                  </yang-module>
+                </yang-modules>
+              </using-yang>
+            </xml-document>
+          </validate>
+        </file>
+      </val>
     </src>
   </inclusion>
 </xiax-block>

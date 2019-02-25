@@ -15,6 +15,7 @@ if "2.7" in sys.version:
   from StringIO import StringIO
 
 from . import generate
+from . import validate
 from . import __version__
 from .common import xiax_namespace
 from .common import xiax_block_v1_header
@@ -169,7 +170,7 @@ def insert(debug, force, src_path, dst_path):
       continue
 
     if debug > 2:
-      print("Spew: generating content for artwork/sourcecode element on line " + str(el.sourceline)
+      print("Spew: generating content for the artwork/sourcecode element on line " + str(el.sourceline)
              + " having 'xiax:gen' value \"" + el.attrib[xiax_namespace+'gen'] + "\".")
 
     gen_attrib_uri_orig = el.attrib[xiax_namespace + 'gen']
@@ -197,6 +198,40 @@ def insert(debug, force, src_path, dst_path):
   ### 2. validate inclusions, if 'xiax:val` attribute provided
   #
   # FIXME: validation support not implemented yet
+  for el in src_doc.iter('artwork', 'sourcecode'):
+    if xiax_namespace+'val' not in el.attrib:
+      continue
+
+    if debug > 2:
+      print("Spew: validating content for the artwork/sourcecode element on line " + str(el.sourceline)
+             + " having 'xiax:val' value \"" + el.attrib[xiax_namespace+'val'] + "\".")
+
+    # get rel path to the "validate" input XML file
+    val_attrib_uri_orig = el.attrib[xiax_namespace + 'val']
+    val_attrib_uri_split = val_attrib_uri_orig.split(':', 1)
+    if len(val_attrib_uri_split)==1:
+      val_attrib_rel_path = val_attrib_uri_split[0]
+    else:
+      val_attrib_rel_path = val_attrib_uri_split[1]
+
+    # get rel path to the file to be validated
+    if xiax_namespace+'src' in el.attrib:
+      xiax_tag = 'src'
+    if xiax_namespace+'gen' in el.attrib:
+      xiax_tag = 'gen'
+    tag_attrib_uri_orig = el.attrib[xiax_namespace + xiax_tag]
+    tag_attrib_uri_split = tag_attrib_uri_orig.split(':', 1)
+    if len(tag_attrib_uri_split)==1:
+      tag_attrib_rel_path = tag_attrib_uri_split[0]
+    else:
+      tag_attrib_rel_path = tag_attrib_uri_split[1]
+
+    # validate it
+    result = validate.validate_content(debug, force, src_dir, val_attrib_rel_path, tag_attrib_rel_path)
+    if result == 1:
+      print("Error: failed trying to validate \"" + tag_attrib_rel_path + "\" using the 'val' file \""
+              + val_attrib_rel_path + "\".", file=sys.stderr)
+      return 1
 
 
 
@@ -362,6 +397,8 @@ def insert(debug, force, src_path, dst_path):
       el.text = etree.CDATA(data)
     xxx_attrib_fd.close()
 
+
+
     # add an "inclusion" entry to the xiax-block
     inclusion = etree.Element("inclusion")
     xiax_block.append(inclusion)
@@ -374,13 +411,15 @@ def insert(debug, force, src_path, dst_path):
       attrib = etree.Element("attrib")
       attrib.text = xxx_attrib_uri_orig
       src.append(attrib)
+      xxx = src
+
     if xiax_tag == "gen":
       gen = etree.Element("gen")
       inclusion.append(gen)
       attrib = etree.Element("attrib")
       attrib.text = xxx_attrib_uri_orig
       gen.append(attrib)
-      attrib = etree.Element("attrib")
+      file = etree.Element("file")
       xxx_attrib_full_path = xxx_attrib_full_path[:-4]  # sans the ".out"
       if "2.7" in sys.version:
         xxx_attrib_fd = open(xxx_attrib_full_path, "rb")
@@ -389,11 +428,38 @@ def insert(debug, force, src_path, dst_path):
       data = xxx_attrib_fd.read()
       if "2.7" in sys.version:
         p = data.decode(encoding='utf-8')
-        attrib.text = etree.CDATA(p)
+        file.text = etree.CDATA(p)
       else:
-        attrib.text = etree.CDATA(data)
+        file.text = etree.CDATA(data)
       xxx_attrib_fd.close()
-      gen.append(attrib)
+      gen.append(file)
+      xxx = gen
+
+    # for 'src' or 'gen', check if we need to add 'val'
+    if xiax_namespace+'val' in el.attrib:
+      val = etree.Element("val")
+      xxx.append(val)
+      attrib = etree.Element("attrib")
+      attrib.text = el.attrib[xiax_namespace + 'val']
+      val.append(attrib)
+      file = etree.Element("file")
+      val_attrib_full_path = os.path.join(src_dir, attrib.text)
+      if "2.7" in sys.version:
+        val_attrib_fd = open(val_attrib_full_path, "rb")
+      else:
+        val_attrib_fd = open(val_attrib_full_path, "r")
+      data = val_attrib_fd.read()
+      if "2.7" in sys.version:
+        p = data.decode(encoding='utf-8')
+        file.text = etree.CDATA(p)
+      else:
+        file.text = etree.CDATA(data)
+      val_attrib_fd.close()
+      val.append(file)
+
+      # remove the 'val' attribute
+      el.attrib.pop(xiax_namespace + 'val')
+
 
     # done processing art/code elements
 

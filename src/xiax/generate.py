@@ -74,8 +74,13 @@ def generate_tree_diagram(debug, force, src_dir, src_rel_path, dst_rel_path):
            + ") doesn't exist." + extra , file=sys.stderr)
     return 1
 
+  extra = ""
+  if tree_diagram_el.find('a:print-yang-data', {'a':"https://watsen.net/xiax"}) is not None:
+    extra = " --tree-print-yang-data"
+    cmd = "pyang -f tree%s %s" % (extra, source_el_full_path)
+  else:
+    cmd = "yanglint -f tree%s %s" % (extra, source_el_full_path)
 
-  cmd = "yanglint -f tree %s" % source_el_full_path
   p = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
   p.wait()
   if p.returncode != 0:
@@ -83,7 +88,7 @@ def generate_tree_diagram(debug, force, src_dir, src_rel_path, dst_rel_path):
     if not err or err is None:
       print("Error: \"" + cmd + "\" failed (no error output)", file=sys.stderr)
     else:
-      print("Error: \"" + cmd + "\" failed (" + err + ")", file=sys.stderr)
+      print("Error: \"" + cmd + "\" failed (" + str(err) + ")", file=sys.stderr)
     return 1
 
 

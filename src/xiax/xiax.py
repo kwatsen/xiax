@@ -130,8 +130,8 @@ def process(debug, force, src, dst):
     # release memory (in case it was a large XML file)
     doc = None
 
-    gen_attrib_rel_path = os.path.dirname(src)
-    if os.path.normpath(gen_attrib_rel_path).startswith(('..','/')):
+    val_attrib_rel_path = os.path.dirname(src)
+    if os.path.normpath(val_attrib_rel_path).startswith(('..','/')):
       print("Error: a non-local filepath is used the 'source' parameter \"" + src
              + "\" [Note: the current working directory MUST be the document directory"
              + " when passing a 'val' file as the 'source' parameter.", file=sys.stderr)

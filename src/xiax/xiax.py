@@ -14,6 +14,7 @@ from datetime import date
 from . import insert
 from . import extract
 from . import generate
+from . import validate
 from . import __version__
 from .common import xiax_namespace
 from .common import xiax_block_v1_header
@@ -100,10 +101,11 @@ def process(debug, force, src, dst):
     else:
       return extract.extract(debug, force, src, dst)
 
-  # release memory (in case it was a large XML file)
-  doc = None
 
-  if root.tag == xiax_namespace+'generate':
+
+  elif root.tag == xiax_namespace+'generate':
+    # release memory (in case it was a large XML file)
+    doc = None
 
     gen_attrib_rel_path = os.path.dirname(src)
     if os.path.normpath(gen_attrib_rel_path).startswith(('..','/')):
@@ -118,15 +120,35 @@ def process(debug, force, src, dst):
 
     result = generate.generate_content(debug, force, "./", src, "")  # empty string == stdout
     if result != 0:
-      print("Error: failed trying to generate content for the artwork/sourcecode element on line "
-             + str(el.sourceline) + " having 'xiax:gen' value \"" + el.attrib[xiax_namespace+'gen']
-             + "\".", file=sys.stderr)
+      print("Error: failed trying to generate content for \"" + src + "\".", file=sys.stderr)
 
     return result
 
 
-  if root.tag == xiax_namespace+'validate':
-    return validate.validate_content(debug, force, src, dst)
+
+  elif root.tag == xiax_namespace+'validate':
+    # release memory (in case it was a large XML file)
+    doc = None
+
+    gen_attrib_rel_path = os.path.dirname(src)
+    if os.path.normpath(gen_attrib_rel_path).startswith(('..','/')):
+      print("Error: a non-local filepath is used the 'source' parameter \"" + src
+             + "\" [Note: the current working directory MUST be the document directory"
+             + " when passing a 'val' file as the 'source' parameter.", file=sys.stderr)
+      return 1
+
+    if dst == "./":  # "./" is the deault added by ArgumentParser
+      print("Error: the 'destination' parameter must specify the file to be validated,"
+              + " when passing a 'val' file as the 'source' parameter.", file=sys.stderr)
+      return 1
+
+    result = validate.validate_content(debug, force, "./", src, dst)
+    if result != 0:
+      print("Error: failed trying to validate \"" + dst + "\" using the 'val' file \""
+              + src + "\".", file=sys.stderr)
+
+    return result
+
 
   print("Error: unreognized root element tag \"" + root.tag + "\" in source XML source.")
   return 1

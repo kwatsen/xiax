@@ -1,0 +1,5 @@
+<generate xmlns="https://watsen.net/xiax">
+  <yang-tree-diagram>
+    <source>xiax-block-v1@YYYY-MM-DD.yang</source>
+  </yang-tree-diagram>
+</generate>

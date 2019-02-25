@@ -25,7 +25,7 @@ def generate_tree_diagram(debug, force, src_dir, src_rel_path, dst_rel_path):
 
   # get the 'tree-diagram' element
   tree_diagram_el = src_doc.getroot()[0]
-  assert tree_diagram_el.tag == xiax_namespace+'tree-diagram'
+  assert tree_diagram_el.tag == xiax_namespace+'yang-tree-diagram'
 
   source_el = tree_diagram_el.find('a:source', {'a':"https://watsen.net/xiax"})
   assert source_el != None
@@ -66,8 +66,12 @@ def generate_tree_diagram(debug, force, src_dir, src_rel_path, dst_rel_path):
 
   # ensure file exists
   if not os.path.isfile(source_el_full_path):
-    print("Error: the file \"" + source_el_full_path + "\" (specified by the \"source\" element on "
-           + src_file + ":" + str(source_el.sourceline) + ") doesn't exist.")
+    extra=""
+    if dst_rel_path == "":
+        extra=(" Note: running `xiax` directly against a 'gen' file will not automatically"
+               + " generate YYYY-MM-DD dependencies.")
+    print("Error: the YANG module to generate the tree diagram for (" + source_el_full_path
+           + ") doesn't exist." + extra , file=sys.stderr)
     return 1
 
 
@@ -103,8 +107,15 @@ def generate_tree_diagram(debug, force, src_dir, src_rel_path, dst_rel_path):
 
 
 def generate_content(debug, force, src_dir, src_rel_path, dst_rel_path):
+  """    
+  src_dir: the document's top-level directory
+  src_rel_path: the rel_path (to src_dir) to the 'val' file (i.e., what comes from the xiax:val attribute)
+  dst_rel_path: where to save the generated content, or empty string for STDOUT
+  """
+
   if debug > 2:
-    print("Spew: Inside generate_content(%d, %s, %s, %s, %s)..." % (debug, force, src_dir, src_rel_path, dst_rel_path))
+    print("Spew: Inside generate_content(%d, %s, %s, %s, %s)..."
+           % (debug, force, src_dir, src_rel_path, dst_rel_path))
 
   # check if YYYY-MM-DD conversion needed
   # note: this routine only converts the embedded YYYY-MM-DD substrings; it does
@@ -121,7 +132,7 @@ def generate_content(debug, force, src_dir, src_rel_path, dst_rel_path):
       print("Spew: filename \"" + os.path.basename(src_rel_path)
              + "\" has \"YYYY-MM-DD\" in it...")
 
-    # calc new dst full path
+    # calc new path
     new_src_rel_path = src_rel_path.replace("YYYY-MM-DD", YYYY_MM_DD)
     
     # ensure new_src_rel_path file doesn't already exist
@@ -148,7 +159,7 @@ def generate_content(debug, force, src_dir, src_rel_path, dst_rel_path):
   root = doc.getroot()
   assert root.tag == xiax_namespace+'generate'
 
-  if root[0].tag == xiax_namespace+'tree-diagram':
+  if root[0].tag == xiax_namespace+'yang-tree-diagram':
     doc = None # release reference 
     return generate_tree_diagram(debug, force, src_dir, src_rel_path, dst_rel_path)
 

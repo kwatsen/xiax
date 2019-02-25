@@ -1,0 +1,10 @@
+<validate xmlns="https://watsen.net/xiax">
+  <yang-module>
+    <additional-yang-modules>
+      <additional-yang-module>
+        <name>ietf-restconf@2017-01-26.yang</name>
+        <uri>https://raw.githubusercontent.com/YangModels/yang/master/standard/ietf/RFC/ietf-restconf%402017-01-26.yang</uri>
+      </additional-yang-module>
+    </additional-yang-modules>
+  </yang-module>
+</validate>

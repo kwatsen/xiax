@@ -1,0 +1,233 @@
+module xiax-structures-v1 {
+  yang-version 1.1;
+  namespace "https://watsen.net/xiax";
+  prefix "xb";
+
+  import ietf-inet-types {
+    prefix inet;
+    reference "RFC 6991: Common YANG Data Types";
+  }
+
+  import ietf-restconf {
+    prefix rc;
+    reference "RFC 8040: RESTCONF Protocol";
+  }
+
+  organization "Watsen Networks";
+
+  contact "Kent Watsen <mailto:kent+ietf@watsen.net>";
+
+  description
+   "This module defines the data model for xiax data block.
+
+    Copyright (c) 2019 Watsen Networks.  All rights reserved.";
+
+
+  revision "YYYY-MM-DD" {
+    description
+     "Initial version";
+  }
+
+
+  rc:yang-data "xiax-block" {
+    container xiax-block {
+
+      description
+        "Contains lists of inclusions that were processed by `xiax`
+         during its 'packing' step.";
+  
+      list inclusion {
+        key path;
+  
+        description
+          "A list of inclusions, one for each <artwork> and/or
+           <sourcecode> element processed by `xiax`.";
+  
+        leaf path {
+          type string;
+          description
+            "The DOM path of the <artwork> or <sourcecode> element.";
+        }
+
+        container src {
+          leaf attrib {
+            type inet:uri;
+            description
+              "The original 'xiax:src' attribute that was in the 
+               <artwork> or <sourcecode> element.";
+          }
+        }
+
+        container gen {
+          leaf attrib {
+            type inet:uri;
+            description
+              "The original 'xiax:gen' attribute that was in the 
+               <artwork> or <sourcecode> element.";
+          }
+          anydata file {
+            description
+              "The content of the file per the 'xiax:gen' attribute";
+          }
+        }
+
+        container val {
+          leaf attrib {
+            type inet:uri;
+            description
+              "The original 'xiax:val' attribute that was in the 
+               <sourcecode> element (<artwork> cannot be validated).";
+          }
+          anydata file {
+            description
+              "The content of the file per the 'xiax:val' attribute";
+          }
+        }
+
+      } // end list inclusion
+    } // end container xiax-block
+  } // end yang-data xiax-block
+
+
+
+
+  rc:yang-data "generate" {
+    container generate {
+
+      description
+        "Contains instructions to `xiax` for how to generate content";
+
+      choice generate-type {
+        description
+          "The type of content to generate, and information for how
+           to do so.";
+
+        container yang-tree-diagram {
+          leaf source {
+            type string;
+            description
+              "The YANG file to generate the tree-diagram from.";
+          }
+        }
+
+        /*** add more gen-types here ***/
+
+      } // end choice gen-type
+    } // end container xiax-block
+  } // end yang-data generate
+
+
+
+
+  rc:yang-data "validate" {
+    container validate {
+
+      description
+        "Contains information for how to validate content.  Currently
+         just the list of modules and ";
+
+      choice content-type {
+        description
+          "The type of content to validate, and information for how
+           to do so.";
+
+        container yang-module {
+          description
+            "Provides information for how to validate the YANG module.";
+          container additional-yang-modules {
+            description
+              "Additional YANG documents that may be needed in order to
+               resolve, e.g., import statements.   Do not include the
+               YANG module being validated.";
+            list additional-yang-module {
+              key name;
+              leaf name {
+                type string;
+              }
+              leaf-list uri {
+                type inet:uri;
+                description
+                  "Location for where the YANG module is located.
+                   Multiple URIs are used to address availability
+                   concerns.  A copy of files referenced using the 
+                   'file' schema is embedded into the xiax-block.
+                   A file will only be stored into the xiax-block
+                   at most once, in case it referenced by more
+                   than one validation.";
+              }
+            } // end list additional-yang-module
+          } // end container additional-yang-modules
+        } // end container yang-module
+
+        container xml-document {
+          description
+            "Provides information for how to validate a XML document.";
+
+          choice schema-type {
+            description
+              "Enables the schema-type to be selected.";
+
+            container using-yang {
+              description
+                "Provides information for how to validate the XML document
+                 using YANG.";
+
+              container yang-modules {
+                list yang-module {
+                  key name;
+                    leaf name {
+                    type string;
+                  }
+                  leaf-list uri {
+                    type inet:uri;
+                    description
+                      "Location for where the YANG module is located.
+                       Multiple URIs are used to address availability
+                       concerns.  A copy of files referenced using the 
+                       'file' schema is embedded into the xiax-block.
+                       A file will only be stored into the xiax-block
+                       at most once, in case it referenced by more
+                       than one validation.";
+                  }
+                } // end list yang-module
+              } // end container yang-modules
+            } // end container using-yang
+
+          /*** add other XML-validating schema-types here ***/
+
+          } // end choice schema-type
+  
+          container additional-xml-documents {
+            description
+              "Additional XML documents that may be needed in order to
+               resolve, e.g., data references.   Do not include the XML
+               document being validated.";
+         
+            list additional-xml-document {
+              key name;
+              leaf name {
+                type string;
+              }
+              leaf-list uri {
+                type inet:uri;
+                description
+                  "Location for where the XML document is located.  
+                   Multiple URIs are used to address availability
+                   concerns.  A copy of files referenced using the 
+                   'file' schema is embedded into the xiax-block.
+                   A file will only be stored into the xiax-block
+                   at most once, in case it referenced by more
+                   than one validation.";
+              }
+            } // end additional-xml-document
+          } // end container additional-xml-documents
+        } // end container xml-document
+  
+        /*** add content-types here ***/
+
+      } // end choice content-type
+    } // end container validate
+  } // end yang-data validate
+
+} // end module xiax-structures-v1
+

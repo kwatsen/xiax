@@ -31,12 +31,9 @@ def validate_yang_module(debug, force, src_dir, src_rel_path, tgt_rel_path):
   yang_module = src_doc.getroot()[0]
   assert yang_module.tag == xiax_namespace+'yang-module'
 
-  for el in yang_module.findall(xiax_namespace+'additional-yang-modules'):
-      print("NOT IMPLEMENTED YET: additional-yang-modules")
-      return 1
-
-
-
+  additional_yang_modules = ""
+  for aym in yang_module.findall(xiax_namespace+'additional-yang-modules'+'/'+xiax_namespace+'additional-yang-module'):
+      additional_yang_modules += " " + aym.text.strip()
 
   # at this point, ...
 
@@ -54,7 +51,7 @@ def validate_yang_module(debug, force, src_dir, src_rel_path, tgt_rel_path):
     return 1
 
   # validate it
-  cmd = "yanglint %s" % tgt_full_path
+  cmd = "yanglint -DD %s %s" % (additional_yang_modules, tgt_full_path)
   p = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
   p.wait()
   if p.returncode != 0:
@@ -92,7 +89,9 @@ def validate_xml_document(debug, force, src_dir, src_rel_path, tgt_rel_path):
 
   using_yang = xml_document[0]
   assert using_yang.tag == xiax_namespace+'using-yang'
-  yang_modules = using_yang[0]
+  data_type = using_yang[0]
+  assert data_type.tag == xiax_namespace+'data-type'
+  yang_modules = using_yang[1]
   assert yang_modules.tag == xiax_namespace+'yang-modules'
   modules_str = ""
   for yang_module in yang_modules.iterchildren(xiax_namespace+'yang-module'):
@@ -105,12 +104,11 @@ def validate_xml_document(debug, force, src_dir, src_rel_path, tgt_rel_path):
         print("Error: the YANG module (" + tgt_full_path + ") to validated the XML document ("
                + tgt_rel_path + ") doesn't exist." + extra , file=sys.stderr)
         return 1
-    modules_str += file
+    modules_str += " " + file
 
-  for el in xml_document.findall(xiax_namespace+'additional-xml-documents'):
-    print("NOT IMPLEMENTED YET: additional-xml-documents")
-    return 1
-
+  addtiional_xml_docs = ""
+  for ayd in yang_module.findall(xiax_namespace+'additional-yang-documents'+'/'+xiax_namespace+'additional-yang-document'):
+      additional_xml_docs += " " + ayd.text.strip()
 
   # at this point, ...
 
@@ -128,7 +126,9 @@ def validate_xml_document(debug, force, src_dir, src_rel_path, tgt_rel_path):
     return 1
 
   # validate it
-  cmd = "yanglint %s %s" % (modules_str, tgt_full_path)
+  if data_type.text == "rpc-reply":
+      data_type.text = rpcreply
+  cmd = "yanglint -DD -s -t %s %s %s %s" % (data_type.text, modules_str, tgt_full_path, addtiional_xml_docs)
   p = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
   p.wait()
   if p.returncode != 0:

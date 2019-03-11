@@ -2,6 +2,7 @@ from __future__ import print_function
 
 import os
 import sys
+import requests
 import subprocess
 from lxml import etree
 from datetime import date
@@ -74,13 +75,30 @@ def generate_tree_diagram(debug, force, src_dir, src_rel_path, dst_rel_path):
            + ") doesn't exist." + extra , file=sys.stderr)
     return 1
 
-  extra = ""
+  extra_modules = ""
+  additional_yang_modules = tree_diagram_el.find('a:additional-yang-modules',
+          {'a':"https://watsen.net/xiax"})
+  if additional_yang_modules is not None:
+      for aym in additional_yang_modules.findall(xiax_namespace+'additional-yang-module'):
+          uri =  aym.find('a:uri', {'a':"https://watsen.net/xiax"})
+          if "http" not in uri.text:
+              print("NOT IMPLEMENTED YET: only 'http/s' based URIs are supported.")
+              return 1
+          r = requests.get(uri.text)
+          fn = uri.text.rsplit('/', 1)[1]
+          open(fn, 'wb').write(r.content)
+          #extra_modules += " " + fn         # yang-lint implicitly searched local path
+                                             # FIXME: this code assumes CWD is top-level dir!
+  extra_flags = ""
+  if tree_diagram_el.find('a:print-groupings', {'a':"https://watsen.net/xiax"}) is not None:
+      extra_flags += " --tree-print-groupings"
   if tree_diagram_el.find('a:print-yang-data', {'a':"https://watsen.net/xiax"}) is not None:
-    extra = " --tree-print-yang-data"
-    cmd = "pyang -f tree%s %s" % (extra, source_el_full_path)
+    extra_flags += " --tree-print-yang-data"
+    cmd = "pyang -f tree --tree-line-length 69 %s %s %s" % (extra_flags, extra_modules,
+            source_el_full_path)
   else:
-    cmd = "yanglint -f tree%s %s" % (extra, source_el_full_path)
-
+    cmd = "yanglint -f tree --tree-line-length 69 %s %s %s" % (extra_flags, extra_modules,
+            source_el_full_path) 
   p = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
   p.wait()
   if p.returncode != 0:

@@ -1,0 +1,643 @@
+module xiax-structures-v1 {
+  yang-version 1.1;
+  namespace "https://watsen.net/xiax";
+  prefix "xb";
+
+  import ietf-inet-types {
+    prefix inet;
+    reference "RFC 6991: Common YANG Data Types";
+  }
+
+  import ietf-restconf {
+    prefix rc;
+    reference "RFC 8040: RESTCONF Protocol";
+  }
+
+  organization "Watsen Networks";
+
+  contact "Kent Watsen <mailto:kent+ietf@watsen.net>";
+
+  description
+   "This module defines the data model for xiax data block.
+
+    Copyright (c) 2019 Watsen Networks.  All rights reserved.";
+
+
+  revision "YYYY-MM-DD" {
+    description
+     "Initial version";
+  }
+
+  grouping val-grouping {
+    container val {
+      leaf attrib {
+        type inet:uri;
+        description
+          "The original 'xiax:val' attribute that was in the 
+           <sourcecode> element (<artwork> cannot be validated).";
+      }
+      anydata file {
+        description
+          "The content of the file per the 'xiax:val' attribute";
+      }
+    }
+  }
+
+  rc:yang-data "xiax-block" {
+    container xiax-block {
+
+      description
+        "Contains lists of inclusions that were processed by `xiax`
+         during its 'packing' step.";
+  
+      list inclusion {
+        key path;
+  
+        description
+          "A list of inclusions, one for each <artwork> and/or
+           <sourcecode> element processed by `xiax`.";
+  
+        leaf path {
+          type string;
+          description
+            "The DOM path of the <artwork> or <sourcecode> element.";
+        }
+
+        container src {
+          leaf attrib {
+            type inet:uri;
+            description
+              "The original 'xiax:src' attribute that was in the 
+               <artwork> or <sourcecode> element.";
+          }
+          uses val-grouping;
+        }
+
+        container gen {
+          leaf attrib {
+            type inet:uri;
+            description
+              "The original 'xiax:gen' attribute that was in the 
+               <artwork> or <sourcecode> element.";
+          }
+          anydata file {
+            description
+              "The content of the file per the 'xiax:gen' attribute";
+          }
+          uses val-grouping;
+        }
+
+
+      } // list inclusion
+    } // container xiax-block
+  } // rc:yang-data xiax-block
+
+
+
+
+  rc:yang-data "generate" {
+    container generate {
+
+      description
+        "Contains instructions to `xiax` for how to generate content";
+
+      choice generate-type {
+        description
+          "The type of content to generate, and information for how
+           to do so.";
+
+        container yang-tree-diagram {
+          leaf source {
+            type string;
+            description
+              "The YANG file to generate the tree-diagram from.";
+          }
+          leaf print-groupings {
+            type empty;
+          }
+          leaf print-yang-data {
+            type empty;
+          }
+          container additional-yang-modules {
+            description
+              "Additional YANG documents that may be needed in order to
+               resolve, e.g., import statements.   Do not include the
+               YANG module havin its tree generated.";
+            list additional-yang-module {
+              key name;
+              leaf name {
+                type string;
+              }
+              leaf-list uri {
+                type inet:uri;
+                description
+                  "Location for where the YANG module is located.
+                   Multiple URIs are used to address availability
+                   concerns.  A copy of files referenced using the 
+                   'file' schema is embedded into the xiax-block.
+                   A file will only be stored into the xiax-block
+                   at most once, in case it referenced by more
+                   than one generation and/or validation.";
+              }
+            } // list additional-yang-module
+          } // list additional-yang-modules
+        } // container yang-tree-diagram
+
+        /*** add more gen-types here ***/
+
+      } // choice gen-type
+    } // container xiax-block
+  } // rc:yang-data generate
+
+
+
+
+  rc:yang-data "validate" {
+    container validate {
+
+      description
+        "Contains information for how to validate content.  Currently
+         just the list of modules and ";
+
+      choice content-type {
+        description
+          "The type of content to validate, and information for how
+           to do so.";
+
+        container yang-module {
+          description
+            "Provides information for how to validate the YANG module.";
+          container additional-yang-modules {
+            description
+              "Additional YANG documents that may be needed in order to
+               resolve, e.g., import statements.   Do not include the
+               YANG module being validated.";
+            list additional-yang-module {
+              key name;
+              leaf name {
+                type string;
+              }
+              leaf-list uri {
+                type inet:uri;
+                description
+                  "Location for where the YANG module is located.
+                   Multiple URIs are used to address availability
+                   concerns.  A copy of files referenced using the 
+                   'file' schema is embedded into the xiax-block.
+                   A file will only be stored into the xiax-block
+                   at most once, in case it referenced by more
+                   than one generation and/or validation.";
+              }
+            } // list additional-yang-module
+          } // container additional-yang-modules
+        } // container yang-module
+
+        container xml-document {
+          description
+            "Provides information for how to validate a XML document.";
+
+          choice schema-type {
+            description
+              "Enables the schema-type to be selected.";
+
+            container using-yang {
+              description
+                "Provides information for how to validate the XML
+                 document using YANG.";
+              leaf data-type {
+                type enumeration {
+                  enum data {
+                    description "Complete datastore (with status data).";
+                  }
+                  enum config {
+                    description "Configuration datastore (without status data).";
+                  }
+                  enum get {
+                    description "Result of the NETCONF <get> operation.";
+                  }
+                  enum getconfig {
+                    description "Result of the NETCONF <get-config> operation.";
+                  }
+                  enum edit {
+                    description "Content of the NETCONF <edit-config> operation.";
+                  }
+                  enum rpc {
+                    description "Content of the NETCONF <rpc> message, defined as
+                                 YANG's rpc input statement.";
+                  }
+                  enum rpc-reply {
+                    description "Reply to the RPC. The matching RPC document must be provided 
+                                 as well (additional-xml-file).";
+                  }
+                  enum notif {
+                    description "Notification instance (content of the <notification>
+                                element without <eventTime>";
+                  }
+                }
+                description
+                  "The type of content being validated.";
+              }
+              container yang-modules {
+                list yang-module {
+                  key name;
+                    leaf name {
+                    type string;
+                  }
+                  leaf-list uri {
+                    type inet:uri;
+                    description
+                      "Location for where the YANG module is located.
+                       Multiple URIs are used to address availability
+                       concerns.  A copy of files referenced using the 
+                       'file' schema is embedded into the xiax-block.
+                       A file will only be stored into the xiax-block
+                       at most once, in case it referenced by more
+                       than one generation and/or validation.";
+                  }
+                } // list yang-module
+              } // container yang-modules
+            } // container using-yang
+
+          /*** add other XML-validating schema-types here ***/
+
+          } // choice schema-type
+  
+          container additional-xml-documents {
+            description
+              "Additional XML documents that may be needed in order to
+               resolve, e.g., data references.   Do not include the XML
+               document being validated.";
+         
+            list additional-xml-document {
+              key name;
+              leaf name {
+                type string;
+              }
+              leaf-list uri {
+                type inet:uri;
+                description
+                  "Location for where the XML document is located.  
+                   Multiple URIs are used to address availability
+                   concerns.  A copy of files referenced using the 
+                   'file' schema is embedded into the xiax-block.
+                   A file will only be stored into the xiax-block
+                   at most once, in case it referenced by more
+                   than one generation and/or validation.";
+              }
+            } // additional-xml-document
+          } // container additional-xml-documents
+        } // container xml-document
+  
+        /*** add content-types here ***/
+
+      } // choice content-type
+    } // container validate
+  } // rc:yang-data validate
+
+
+
+
+
+
+
+  //rc:yang-data processing-intructions {
+
+    grouping transform-grouping {
+      container transform {
+        grouping replace-grouping {
+          container replace {
+            leaf pattern {
+              type string;
+              description "The pattern to replace.";
+            }
+            choice with {
+              leaf strftime {
+                type string;
+                description "A string to process via 'strftime..";
+              }
+              leaf git-tag {
+                type string;
+                description
+                  "Like 'strftime', but the only available substitution
+                   is '%v', which is the *next* version extracted from
+                   `git tag`.  If there are `git` tags, then the last tag
+                   is examined for the last occurrance of two sequential
+                   digits (e.g. [0-9]{2}), which are then used previous
+                   document version.  If there are no `git` tags, then
+                   '00' is used.";
+              }
+            }
+          }
+        }
+        container filename {
+          uses replace-grouping;
+        }
+        container content {
+          uses replace-grouping;
+        }
+      } // container transform
+    } // grouping transform-grouping
+
+  rc:yang-data processing-intructions {
+    container processing-intructions {
+      typedef filepath {
+        type string;
+        description
+          "A filepath, relative to the document's top-level directory,
+           to a file.  The filepath MUST point to a file contained
+           within the document's top-level directory (sub-directories
+           are okay).";
+      }
+      grouping source-or-inclusion-grouping {
+        choice source-or-inclusion {
+          leaf source {
+            type filepath;
+            description
+              "The YANG module is a local file.";
+          }
+          leaf inclusion {
+            type leafref {
+              path "/processing-intructions/inclusions/inclusion/tag";
+            }
+            description
+              "The YANG module is an inclusion (i.e.,
+               after it has been transformed, and
+               validated).";
+          }
+        }
+      }
+      container document {
+        uses transform-grouping;
+      }
+      container inclusions {
+        list inclusion {
+          key tag;
+          leaf tag {
+            type string;
+            description
+              "The name of the 'xiax:tag' attribute in the source XML
+               document.";
+          }
+          choice src-or-gen {
+            container source {
+              leaf filepath {
+                type filepath;
+                description
+                  "The file to be included.";
+              }
+              uses transform-grouping;
+              container framing {
+                leaf yang-markers {
+                  type empty;
+                }
+              }
+              container validate {
+                description
+                  "Contains information for how to validate content,
+                   after it has been transformed.";
+                choice content-type {
+                  description
+                    "The type of content to validate, and information
+                     for how to do so.  Note: up to this point, the
+                     content could be any text-based format.";
+
+                  container yang-module {
+                    description
+                      "The content is a YANG module.  Information for
+                       how to validate the YANG module is provided.";
+                    container additional-yang-modules {
+                      description
+                        "Additional YANG documents that may be needed
+                         in order to resolve, e.g., import statements.";
+                      list additional-yang-module {
+                        key name;
+                        leaf name {
+                          type string;
+                        }
+                        uses source-or-inclusion-grouping;
+/*
+                        leaf-list uri {
+                          type inet:uri;
+                          description
+                            "Location for where the YANG module is
+                             located.  Multiple URIs are used to
+                             address availability concerns.  A copy
+                             of files referenced using the 'file'
+                             schema is embedded into the xiax-block.
+                             A file will only be stored into the
+                             xiax-block at most once, in case it
+                             referenced by more than one generation
+                             and/or validation.";
+                        }
+*/
+                      } // list additional-yang-module
+                    } // container additional-yang-modules
+                  } // container yang-module
+
+                  container xml-document {
+                    description
+                      "The content is an XML document.  Information for
+                       how to validate the YANG module is provided.";
+                    choice schema-type {
+                      description
+                        "The type of schema to use the validate the
+                         XML document with, and information for how
+                         to do so.";
+                      container using-yang {
+                        description
+                          "The XML document will be validated using
+                           a YANG module.  Information for how to do
+                           so is provided.";
+                        container yang-module {
+                          description
+                            "The YANG module to generate the tree diagram
+                             for.";
+                          uses source-or-inclusion-grouping;
+                        }
+                        leaf data-type {
+                          type enumeration {
+                            enum data {
+                              description
+                                "The content represents a complete
+                                 datastore (with status data).";
+                            }
+                            enum config {
+                              description
+                                "The content represents a conventional
+                                 configuration datastore (without
+                                 status data).";
+                            }
+                            enum get {
+                              description
+                                "The content represents the result of
+                                 the NETCONF <get> operation.";
+                            }
+                            enum getconfig {
+                              description
+                                "The content represents the result of
+                                 the NETCONF <get-config> operation.";
+                            }
+                            enum edit {
+                              description
+                                "The content represents a NETCONF
+                                 <edit-config> operation.";
+                            }
+                            enum rpc {
+                              description
+                                "The content represents a NETCONF
+                                 <rpc> message, defined as YANG's rpc
+                                 input statement.";
+                            }
+                            enum rpc-reply {
+                              description
+                                "The content represents the reply to
+                                 an RPC.  The matching RPC document
+                                 MUST be provided as well (see 
+                                 'additional-xml-document').";
+                            }
+                            enum notif {
+                              description
+                                "The content represents a notification
+                                 instance (content of the <notification>
+                                 element without the <eventTime>";
+                            }
+                          }
+                          description
+                            "The type of YANG content being validated.";
+                        } // leaf data-type
+                        container additional-yang-modules {
+                          list additional-yang-module {
+                            key name;
+                              leaf name {
+                              type string;
+                            }
+                            uses source-or-inclusion-grouping;
+/*
+                            leaf-list uri {
+                              type inet:uri;
+                              description
+                                "Location for where the YANG module is located.
+                                 Multiple URIs are used to address availability
+                                 concerns.  A copy of files referenced using the 
+                                 'file' schema is embedded into the xiax-block.
+                                 A file will only be stored into the xiax-block
+                                 at most once, in case it referenced by more
+                                 than one generation and/or validation.";
+                            }
+*/
+                          } // list additional-yang-module
+                        } // container additional-yang-modules
+                      } // container using-yang
+
+                      /*** Future dev: add other XML-validating schema-types here ***/
+                      /*** Future dev: add other XML-validating schema-types here ***/
+                      /*** Future dev: add other XML-validating schema-types here ***/
+
+                    } // choice schema-type
+  
+                    container additional-xml-documents {
+                      description
+                        "Additional XML documents that may be needed in order to
+                         resolve, e.g., data references.   Do not include the XML
+                         document being validated.";
+                   
+                      list additional-xml-document {
+                        key name;
+                        leaf name {
+                          type string;
+                        }
+                        uses source-or-inclusion-grouping;
+/*
+                        leaf-list uri {
+                          type inet:uri;
+                          description
+                            "Location for where the XML document is located.  
+                             Multiple URIs are used to address availability
+                             concerns.  A copy of files referenced using the 
+                             'file' schema is embedded into the xiax-block.
+                             A file will only be stored into the xiax-block
+                             at most once, in case it referenced by more
+                             than one generation and/or validation.";
+                        }
+*/
+                      } // additional-xml-document
+                    } // container additional-xml-documents
+                  } // container xml-document
+  
+                  /*** Future devs: add content-types here ***/
+                  /*** Future devs: add content-types here ***/
+                  /*** Future devs: add content-types here ***/
+
+                } // choice content-type
+              } // container validate
+            } // container source
+
+            container generate {
+              description
+                "Contains instructions to `xiax` for how to generate
+                 content";
+
+              choice generate-type {
+                description
+                  "The type of content to generate, and information
+                   for how to do so.";
+
+                container yang-tree-diagram {
+                  description
+                    "Generate a YANG module tree diagram.";
+                  container yang-module {
+                    description
+                      "The YANG module to generate the tree diagram
+                       for.";
+                    uses source-or-inclusion-grouping;
+                  }
+                  container parameters {
+                    leaf print-groupings {
+                      type empty;
+                    }
+                    leaf print-yang-data {
+                      type empty;
+                    }
+                  }
+                  container additional-yang-modules {
+                    description
+                      "Additional YANG documents that may be needed in order to
+                       resolve, e.g., import statements.   Do not include the
+                       YANG module havin its tree generated.";
+                    list additional-yang-module {
+                      key name;
+                      leaf name {
+                        type string;
+                      }
+                      uses source-or-inclusion-grouping;
+/*
+                      leaf-list uri {
+                        type inet:uri;
+                        description
+                          "Location for where the YANG module is located.
+                           Multiple URIs are used to address availability
+                           concerns.  A copy of files referenced using the 
+                           'file' schema is embedded into the xiax-block.
+                           A file will only be stored into the xiax-block
+                           at most once, in case it referenced by more
+                           than one generation and/or validation.";
+                      }
+*/
+                    } // list additional-yang-module
+                  } // list additional-yang-modules
+                } // container yang-tree-diagram
+
+                /*** Future devs: add more gen-types here ***/
+                /*** Future devs: add more gen-types here ***/
+                /*** Future devs: add more gen-types here ***/
+
+              } // choice generate-type
+            } // container generate
+          } // choice src-or-gen
+        } // list inclusion
+      } // container inclusions
+    } // container processing-instructions
+  } // rc:yang-data processing-intructions
+
+} // module xiax-structures-v1
+

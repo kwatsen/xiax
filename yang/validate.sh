@@ -1,7 +1,7 @@
 #!/bin/bash
 
 DATE=`date +%Y-%m-%d`
-sed -e"s/YYYY-MM-DD/$DATE/" xiax-structures-v1@YYYY-MM-DD.yang > xiax-structures-v1\@$DATE.yang
+sed -e"s/YYYY-MM-DD/$DATE/" -e'/rc:yang-data/d' xiax-structures-v1.yang > xiax-structures-v1\@$DATE.yang
 
 echo
 
@@ -28,8 +28,8 @@ printf "okay.\n\n"
 
 # first, we need to create a version of the YANG module without the "rc:yang-data"
 # extension (e.g., make it look like it defines protocol-accessible nodes)
-sed '/rc:yang-data/d' xiax-structures-v1\@$DATE.yang > tmp
-mv tmp xiax-structures-v1\@$DATE.yang
+#sed '/rc:yang-data/d' xiax-structures-v1\@$DATE.yang > tmp
+#mv tmp xiax-structures-v1\@$DATE.yang
 
 echo "validating ex-xiax-block-v1.xml..."
 printf "  ^ with yanglint..."
@@ -81,5 +81,20 @@ if [ $? -ne 0 ]; then
   exit 1
 fi
 printf "okay.\n\n"
+
+
+echo "validating ex-xiax-pis.xml..."
+printf "  ^ with yanglint..."
+response=`yanglint --verbose --strict xiax-structures-v1\@$DATE.yang ex-xiax-pis.xml 2>&1`
+if [ $? -ne 0 ]; then
+  printf "failed (error code: $?)\n"
+  printf "$response\n\n"
+  rm $name 
+  echo
+  exit 1
+fi
+printf "okay.\n\n"
+
+echo "YIBA YIBA!"
 
 rm xiax-structures-v1\@$DATE.yang

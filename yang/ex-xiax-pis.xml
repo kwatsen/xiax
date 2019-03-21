@@ -182,7 +182,8 @@
             </using-yang>
             <additional-xml-documents>
               <additional-xml-document>
-                <inclusion>refs/ex-crypto-types-ghk-rpc.xml</inclusion>
+	        <bogus-key>dfgdfg</bogus-key> 
+	        <inclusion>refs/ex-crypto-types-ghk-rpc.xml</inclusion>
               </additional-xml-document>
             </additional-xml-documents>
           </xml-document>

@@ -168,10 +168,10 @@
         <validate>
           <xml-document>
             <using-yang>
-              <data-type>rpc-reply</data-type>
               <yang-module>
                 <inclusion>ex-crypto-types.yang</inclusion>
               </yang-module>
+              <data-type>rpc-reply</data-type>
               <!--
               <additional-yang-modules>
                 <additional-yang-module>                            // should this be derived?

@@ -542,8 +542,8 @@ module xiax-structures-v1 {
                          document being validated.";
                    
                       list additional-xml-document {
-                        key name;
-                        leaf name {
+                        key bogus-key;
+                        leaf bogus-key {
                           type string;
                         }
                         uses source-or-inclusion-grouping;
@@ -639,5 +639,4 @@ module xiax-structures-v1 {
     } // container processing-instructions
   } // rc:yang-data processing-intructions
 
-} // module xiax-structures-v1
-
+}

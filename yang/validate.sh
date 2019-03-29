@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 DATE=`date +%Y-%m-%d`
 sed -e"s/YYYY-MM-DD/$DATE/" -e'/rc:yang-data/d' xiax-structures-v1.yang > xiax-structures-v1\@$DATE.yang
@@ -7,7 +7,7 @@ echo
 
 echo "validating xiax-structures-v1.yang..."
 printf "  ^ with pyang..."
-response=`pyang --strict --canonical --max-line-length=69 xiax-structures-v1\@$DATE.yang 2>&1`
+response=`pyang --strict --canonical --max-line-length=69 -p ./ietf-modules/ xiax-structures-v1\@$DATE.yang 2>&1`
 if [ $? -ne 0 ]; then
   printf "failed (error code: $?)\n"
   printf "$response\n\n"

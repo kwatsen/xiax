@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 DATE=`date +%Y-%m-%d`
 
@@ -8,7 +8,7 @@ sed -e"s/YYYY-MM-DD/$DATE/" -e'/rc:yang-data/d' xiax-structures-v1.yang > xiax-s
 
 
 #pyang -f tree --tree-line-length 71 --tree-print-yang-data xiax-block-v1\@*.yang > tree.txt
-pyang -f tree --tree-line-length 71 --tree-print-yang-data xiax-structures-v1\@$DATE.yang > tree.txt
+pyang -f tree --tree-line-length 71 --tree-print-yang-data -p ./ietf-modules/ xiax-structures-v1\@$DATE.yang > tree.txt
 
 #rm xiax-block-v1\@*.yang
 rm xiax-structures-v1\@$DATE.yang
